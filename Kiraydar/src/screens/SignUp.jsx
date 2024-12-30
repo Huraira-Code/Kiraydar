@@ -41,7 +41,7 @@ const SignUp = ({navigation}) => {
     setLoading(true)
     try {
       const dataResponse = await axios.post(
-        `http://${BASE_URL}/api/user/signup`,
+        `${BASE_URL}/api/user/signup`,
         {
           email: data.email,
           cnic: data.cnic,

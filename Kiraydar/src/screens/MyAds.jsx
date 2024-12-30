@@ -49,7 +49,7 @@ const MyAds = ({navigation}) => {
       console.log('this is ads');
       try {
         const response = await axios.post(
-          `http://${BASE_URL}/api/property/findmyproperty`,
+          `${BASE_URL}/api/property/findmyproperty`,
           {
             propertyowner: decodeData.response._id,
           },
@@ -72,7 +72,7 @@ const MyAds = ({navigation}) => {
       const token = await AsyncStorage.getItem('token'); // Replace with your key
       try {
         const response = await axios.post(
-          `http://${BASE_URL}/api/property/myAgreement`,
+          `${BASE_URL}/api/property/myAgreement`,
           {},
           {
             headers: {
@@ -96,7 +96,7 @@ const MyAds = ({navigation}) => {
       const token = await AsyncStorage.getItem('token'); // Replace with your key
       try {
         const response = await axios.post(
-          `http://${BASE_URL}/api/property/myBuyers`,
+          `${BASE_URL}/api/property/myBuyers`,
           {},
           {
             headers: {

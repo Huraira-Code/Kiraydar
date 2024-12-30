@@ -50,7 +50,7 @@ const Login = ({navigation}) => {
     console.log(data);
     try {
       const dataResponse = await axios.post(
-        `http://${BASE_URL}/api/user/signin`,
+        `${BASE_URL}/api/user/signin`,
         {
           email: data.email,
           password: data.password,

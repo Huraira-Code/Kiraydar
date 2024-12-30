@@ -124,7 +124,7 @@ const AddProperty = () => {
       });
 
       const response = await axios.post(
-        `http://${BASE_URL}/api/property/createProperty`,
+        `${BASE_URL}/api/property/createProperty`,
         formData,
         {
           headers: {

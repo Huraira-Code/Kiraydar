@@ -47,7 +47,7 @@ const sendToChat = async() => {
     // 1. Create a payment intent
     try {
       const dataResponse = await axios.post(
-        `http://${BASE_URL}/api/stripe/intents`,
+        `${BASE_URL}/api/stripe/intents`,
         {
           amount: route.params.data.advance,
         },
@@ -81,7 +81,7 @@ const sendToChat = async() => {
     const token = await AsyncStorage.getItem('token'); // Replace with your key
     try {
       const response = await axios.post(
-        `http://${BASE_URL}/api/property/makeAgreemnet`, // API endpoint
+        `${BASE_URL}/api/property/makeAgreemnet`, // API endpoint
         {
           propertyId: route.params.data._id,
         },

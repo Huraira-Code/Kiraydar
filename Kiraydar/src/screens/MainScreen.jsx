@@ -76,7 +76,7 @@ const MainScreen = ({navigation}) => {
 
       try {
         const response = await axios.post(
-          `http://${BASE_URL}/api/property/freshRecommendation`,
+          `${BASE_URL}/api/property/freshRecommendation`,
           {
             propertyowner: decodeData.response._id,
           },
