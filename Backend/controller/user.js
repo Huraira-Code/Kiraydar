@@ -2,7 +2,7 @@ const User = require("../models/user");
 const { query, check, validationResult } = require("express-validator");
 const jwt = require("jsonwebtoken");
 
-const signIn = async (req, res) => {
+const   signIn = async (req, res) => {
   try {
     const myData = await User.findOne(
       {
