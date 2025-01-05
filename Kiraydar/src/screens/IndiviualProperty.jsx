@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Modal,
 } from 'react-native';
 import React, {useState, useEffect} from 'react';
 import {useRoute} from '@react-navigation/native';
@@ -17,66 +18,91 @@ import axios from 'axios';
 import {BASE_URL} from '../api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import loadAndDecodeToken from '../Controller/LoadAndDecodeToken';
+
 import {
   useChatContext,
   Channel as StreamChannel,
   MessageList,
   MessageInput,
 } from 'stream-chat-react-native';
+import Loading from '../components/Loading';
 
 const IndiviualProperty = ({navigation}) => {
   const [data, setData] = useState();
   const [decodeData, setDecodeData] = useState();
   const [showAgreement, setShowAgreement] = useState(true);
-  const [showChat, setShowChat] = useState(false);
-  const [showChatOwner, setShowChatOwner] = useState(false);
+  const [showChat, setShowChat] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   const route = useRoute();
   const {initPaymentSheet, presentPaymentSheet} = useStripe();
   const {client} = useChatContext(); // Same client as in ChatScreen
-  console.log(route.params.data.advance);
+  console.log(route.params.data);
 
-const sendToChat = async() => {
-  navigation.navigate('Channel', {channelId: `${route.params.data.propertySelling.agreementMaker}-${route.params.data._id}`}); // Navigate to ChannelScreen with channelId
-
-}
-
-
-  const onCheckout = async () => {
-
-    // 1. Create a payment intent
-    try {
-      const dataResponse = await axios.post(
-        `${BASE_URL}/api/stripe/intents`,
+  const sendToChat = async () => {
+    if (decodeData) {
+      console.log(route.params.data.propertyowner);
+      console.log(decodeData.response._id);
+      const channel = client.channel(
+        'messaging',
+        `${decodeData.response._id}-${route.params.data._id}`, // Unique channel ID
         {
-          amount: route.params.data.advance,
+          members: [route.params.data.propertyowner, decodeData.response._id],
+          name: `${route.params.data.title}`, // Add name dynamically
         },
       );
-
-      // 2. Initialize the Payment sheet
-      const initResponse = await initPaymentSheet({
-        merchantDisplayName: 'notJust.dev',
-        paymentIntentClientSecret: dataResponse.data.paymentIntent,
-      });
-
-      // 3. Present the Payment Sheet from Stripe
-      const result = await presentPaymentSheet();
-
-      // 4. Check the result and call MakeAgreementDone if payment is confirmed
-      if (result.error) {
-        console.log('Payment failed', result.error);
-        Alert.alert('Payment failed', result.error.message);
-      } else {
-        // Payment was successful
-        console.log('Payment successful', result);
-        await MakeAgreementDone(); // This function will send data to the database to save it
-      }
-    } catch (error) {
-      console.log('Error in payment process', error);
-      Alert.alert('Error', error.message);
+      await channel.watch();
+      navigation.navigate('Channel', {
+        channelId: `${decodeData.response._id}-${route.params.data._id}`,
+      }); // Navigate to ChannelScreen with channelId
     }
   };
 
+  const onCheckout = async () => {
+
+    try {
+      // 1. Create a Payment Intent
+      const dataResponse = await axios.post(`${BASE_URL}/api/stripe/intents`, {
+        amount: route.params.data.advance,
+      });
+  
+      console.log("DataResponse", dataResponse.data);
+  
+      // 2. Initialize the Payment Sheet
+      const initResponse = await initPaymentSheet({
+        merchantDisplayName: 'notJust.dev',
+        paymentIntentClientSecret: dataResponse.data.paymentIntent,
+        googlePay: true, // Enable Google Pay if required 
+      });
+     
+      if (initResponse.error) {
+        console.log('Error initializing payment sheet:', initResponse.error);
+        Alert.alert('Error', initResponse.error.message);
+        return;
+      }
+  
+      // 3. Present Payment Sheet
+      const result = await presentPaymentSheet();
+  
+      // 4. Handle Payment Result
+      if (result.error) {
+        console.log('Payment failed:', result.error);
+        Alert.alert('Payment failed', result.error.message);
+      } else {
+        console.log(result)
+        console.log('Payment successful!');
+        Alert.alert('Payment Successful', 'Your payment was successful!');
+        console.log(dataResponse.data.paymentIntent)
+        
+        // Uncomment the line below to save data in the database
+        await MakeAgreementDone(); 
+      }
+    } catch (error) {
+      console.log('Error in payment process:', error);
+      Alert.alert('Error', error.message);
+    }
+  };
+  
   const MakeAgreementDone = async () => {
     const token = await AsyncStorage.getItem('token'); // Replace with your key
     try {
@@ -93,15 +119,6 @@ const sendToChat = async() => {
         },
       );
       if (response.status == 200) {
-        console.log(response.data.propertyowner);
-        console.log(response.data.propertySelling.agreementMaker);
-        const channel = client.channel('messaging',`${response.data.propertySelling.agreementMaker}-${route.params.data._id}` ,{
-          members: [
-            response.data.propertyowner,
-            response.data.propertySelling.agreementMaker,
-          ],
-        });
-        await channel.watch();
         Alert.alert(
           'HURRAH , YOUR TRASCATION HAVE BEEN SENDED TO ESCROW NOW YOU CAN CHAT WITH OWNER',
         );
@@ -116,38 +133,13 @@ const sendToChat = async() => {
       try {
         const decoded = await loadAndDecodeToken(); // Assuming loadAndDecodeToken does not require any parameters
         setDecodeData(decoded); // Assuming you want to log the decoded token
+        setLoading(false);
       } catch (error) {
         console.error('Error loading and decoding token:', error);
       }
     };
     handleLoadAndDecode();
   }, []);
-  useEffect(() => {
-    if (decodeData && decodeData.response) {
-      if (
-        decodeData.response._id === route.params.data.propertyowner ||
-        decodeData.response._id ===
-          route.params.data.propertySelling.agreementMaker
-      ) {
-        setShowAgreement(false);
-      }
-
-      if (
-        decodeData.response._id ===
-        route.params.data.propertySelling.agreementMaker
-      ) {
-        setShowChat(true);
-      }
-
-      if (
-        decodeData.response._id ===
-        route.params.data.propertyowner && route.params.data.propertySelling.agreement === true
-      ) {
-        setShowChatOwner(true);
-      }
-
-    }
-  }, [decodeData]);
 
   return (
     <ScrollView style={{backgroundColor: 'white'}}>
@@ -229,7 +221,7 @@ const sendToChat = async() => {
               name="bed">
               <Text style={{fontSize: 14, color: 'black'}}>No of bedroom</Text>
             </AwesomeIcon>
-            <Text>2</Text>
+            <Text>{route.params.data.bedroom}</Text>
           </View>
         </View>
         <View>
@@ -243,7 +235,7 @@ const sendToChat = async() => {
               name="shower">
               <Text style={{fontSize: 14, color: 'black'}}>No of Shower</Text>
             </AwesomeIcon>
-            <Text>2</Text>
+            <Text>{route.params.data.bathroom}</Text>
           </View>
         </View>
       </View>
@@ -268,7 +260,7 @@ const sendToChat = async() => {
                 Area in sq/feet
               </Text>
             </AwesomeIcon>
-            <Text>2</Text>
+            <Text>{route.params.data.areaofhouse}</Text>
           </View>
         </View>
         <View>
@@ -285,7 +277,7 @@ const sendToChat = async() => {
                 No of People Sharing
               </Text>
             </AwesomeIcon>
-            <Text>2</Text>
+            <Text>{route.params.data.peoplesharing}</Text>
           </View>
         </View>
       </View>
@@ -398,28 +390,22 @@ const sendToChat = async() => {
       ) : (
         <></>
       )}
-
-{showChatOwner ? (
-        <TouchableOpacity
-          onPress={sendToChat}
-          style={{
-            backgroundColor: 'green',
-            marginHorizontal: 20,
-            paddingVertical: 10,
-            borderRadius: 20,
-            marginBottom: 20,
-          }}>
-          <Text style={{color: 'white', fontSize: 15, textAlign: 'center'}}>
-            Chat With The Client
-          </Text>
-        </TouchableOpacity>
-      ) : (
-        <></>
-      )}
+      <Modal transparent={true} visible={loading} animationType="fade">
+        <View style={styles.overlay}>
+          <Loading />
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
 
 export default IndiviualProperty;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Dark overlay
+  },
+});

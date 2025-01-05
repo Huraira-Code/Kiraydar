@@ -2,6 +2,10 @@ const { default: mongoose } = require("mongoose");
 const { uploadOnCloudinary } = require("../Utility/cloudinary");
 const Property = require("../models/property");
 const jwt = require("jsonwebtoken");
+const Agreement = require("../models/Agreement");
+const User = require("../models/user");
+
+
 const createProperty = async (req, res) => {
   console.log(req.body);
   console.log("this is first log in controller ", req.files);
@@ -93,7 +97,7 @@ const myProperty = async (req, res) => {
     // Fetch data from the database
     const myData = await Property.find(
       { propertyowner: req.body.propertyowner },
-      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling"
+      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling peoplesharing"
     ).exec();
 
     // Check if any data was found
@@ -122,7 +126,7 @@ const MyAgreement = async (req, res) => {
     // Fetch data from the database
     const myData = await Property.find(
       { "propertySelling.agreementMaker": _id }, // Corrected the property path
-      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling"
+      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling peoplesharing"
     ).exec();
 
     // Check if any data was found
@@ -154,7 +158,7 @@ const freshRecommendation = async (req, res) => {
           { "propertySelling.agreement": { $ne: true } }, // Agreement maker not equal
         ],
       }, // Use $ne for not equal
-      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling"
+      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling peoplesharing"
     ).exec();
 
     // Check if any data was found
@@ -188,7 +192,7 @@ const buyerDetail = async (req, res) => {
           { "propertySelling.agreement": true }, // Agreement maker not equal
         ],
       }, // Use $ne for not equal
-      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling"
+      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling peoplesharing"
     )
       .populate("propertySelling.agreementMaker")
       .exec();
@@ -210,11 +214,29 @@ const buyerDetail = async (req, res) => {
 const makeAgreement = async (req, res) => {
   const authHeader = req.headers.authorization;
   const token = authHeader.split(" ")[1];
-  console.log(token);
-  const verify = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-  const _id = verify.response._id;
 
   try {
+    // Verify the JWT token and get the user ID
+    const verify = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    const _id = verify.response._id;
+
+    // Step 1: Find the Property first to check if it exists
+    const property = await Property.findById(req.body.propertyId);
+
+    if (!property) {
+      return res.status(404).json({ error: "Property not found" });
+    }
+
+    // Step 2: Create a new Agreement
+    const newAgreement = new Agreement({
+      PropertyId: req.body.propertyId,
+      buyerId: _id,
+      agreementPricePaid: req.body.agreementPricePaid,
+    });
+
+    const savedAgreement = await newAgreement.save(); // Save the agreement
+
+    // Step 3: Update the Property and link the Agreement
     const updatedProperty = await Property.findByIdAndUpdate(
       req.body.propertyId,
       {
@@ -222,21 +244,220 @@ const makeAgreement = async (req, res) => {
           "propertySelling.agreement": true,
           "propertySelling.agreementMaker": new mongoose.Types.ObjectId(_id),
         },
+        $push: {
+          "propertySelling.agreementIds": savedAgreement._id, // Push agreement ID
+        },
       },
-      { new: true, runValidators: true } // Return the updated document and run validators
+      { new: true, runValidators: true } // Return updated property
     );
 
     if (!updatedProperty) {
       return res
         .status(502)
-        .json({ error: "operation not perform , property not updated" });
+        .json({ error: "Operation not performed, property not updated" });
     }
 
-    res.status(200).json(updatedProperty);
+    // Step 4: Return the updated property and agreement details
+    res.status(200).json({ updatedProperty, agreement: savedAgreement });
   } catch (error) {
-    console.error("Error updating property:", error);
+    console.error("Error making agreement:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
+
+const agreementDetailShow = async (req, res) => {
+  const propertyId = req.body.propertyId;
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ message: "Authorization header missing" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    // Verify token
+    const verify = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    const _id = verify.response._id;
+
+    // Find property by ID
+    const property = await Property.findById(propertyId);
+    if (!property) {
+      return res.status(404).json({ message: "Property not found" });
+    }
+
+    // Extract ownerId and agreementMakerId
+    const propertyOwner = property.propertyowner;
+    const propertyBuyerId = property.propertySelling.agreementMaker;
+    const AgreementDetail = property.propertySelling.agreementIds[0];
+    console.log(propertyOwner);
+    console.log(AgreementDetail.toString());
+    console.log(propertyBuyerId.toString());
+
+    // Fetch owner and agreement maker details
+    const owner = await User.findById(propertyOwner);
+    const agreementMakerID = await User.findById(propertyBuyerId.toString());
+    const agreementDetails = await Agreement.findById(
+      AgreementDetail.toString()
+    );
+
+    if (!owner || !agreementMakerID) {
+      return res
+        .status(404)
+        .json({ message: "Owner or Agreement Maker not found" });
+    }
+
+    // Respond with details
+    res.status(200).json({
+      property,
+      owner,
+      agreementMakerID,
+      agreementDetails,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const AccceptAgreement = async (req, res) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ message: "Authorization header missing" });
+  }
+
+  const token = authHeader.split(" ")[1];
+  const agreementId = req.body.Id;
+
+  try {
+    // Verify token
+    const verify = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    const _id = verify.response._id;
+
+    // Find agreement by ID
+    const agreement = await Agreement.findById(agreementId);
+    if (!agreement) {
+      return res.status(404).json({ message: "Agreement not found" });
+    }
+
+    // Check if _id matches buyerId
+    if (_id == agreement.buyerId.toString()) {
+      agreement.agreementBuyer = true;
+    } else {
+      agreement.agreementOwner = true;
+    }
+
+    // Save updated agreement
+    await agreement.save();
+
+    res.status(200).json({ message: "Agreement updated successfully" });
+  } catch (error) {
+    console.error(error);
+  }
+  res.status(500).json({ message: "Internal server error" });
+};
+
+const RejectAgreement = async (req, res) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ message: "Authorization header missing" });
+  }
+
+  const token = authHeader.split(" ")[1];
+  const agreementId = req.body.Id;
+  const propertId = req.body.propertyId;
+
+  try {
+    // Verify token
+    const verify = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+    // Find agreement by ID
+    const agreement = await Agreement.findById(agreementId);
+    const property = await Property.findById(propertId);
+
+    if (!agreement) {
+      return res.status(404).json({ message: "Agreement not found" });
+    }
+
+    agreement.agreementSuccess = false;
+    property.propertySelling.agreement = false;
+    property.propertySelling.agreementMaker = null;
+
+    // Save updated agreement
+    await agreement.save();
+    await property.save();
+    res.status(200).json({ message: "Agreement Rejected successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const MakeNegotationPrice = async (req, res) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ message: "Authorization header missing" });
+  }
+
+  const token = authHeader.split(" ")[1];
+  const agreementId = req.body.agreementId;
+  const negotationPrice = req.body.negotationPrice;
+  try {
+    // Verify token
+    const verify = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+    // Find agreement by ID
+    const agreement = await Agreement.findById(agreementId);
+
+    if (!agreement) {
+      return res.status(404).json({ message: "Agreement not found" });
+    }
+
+    agreement.negotationPrice = negotationPrice;
+
+    // Save updated agreement
+    await agreement.save();
+    res.status(200).json({ message: "Negotation Price Updated" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+const pricePaid = async (req, res) => {
+  
+  
+  try {
+    const { amount, currency, recipientType, recipientId } = req.body;
+
+    if (!amount || !currency || !recipientType || !recipientId) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Validate recipient type
+    if (recipientType !== 'card' && recipientType !== 'bank_account') {
+      return res.status(400).json({ error: 'Invalid recipient type' });
+    }
+
+    // Create a Transfer to the connected account
+    const transfer = await stripe.transfers.create({
+      amount: amount, // amount in cents
+      currency: currency,
+      destination: recipientId, // Connected Account ID (acct_...)
+    });
+
+    res.status(200).json({ success: true, transfer });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
 
 // const myProperty = async (req, res) => {
 //   try {
@@ -256,5 +477,10 @@ module.exports = {
   freshRecommendation,
   makeAgreement,
   MyAgreement,
+  agreementDetailShow,
   buyerDetail,
+  AccceptAgreement,
+  RejectAgreement,
+  MakeNegotationPrice,
+  pricePaid
 };

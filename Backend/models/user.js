@@ -19,6 +19,14 @@ const userSchema = mongoose.Schema({
     required: true,
     unique: true,
   },
+  bankAccount: {
+    type: String,
+    required: true,
+  },
+  BankAountStripeId: {
+    type: String,
+    default: null,
+  },
   phonenumber: {
     type: Number,
     required: true,

@@ -264,7 +264,7 @@ const MainScreen = ({navigation}) => {
             }}>
             Fresh recommendetations
           </Text>
-          <ScrollView horizontal={true}>
+          <ScrollView>
             {recommendation.map((fresh, index) => {
               const imageUrl = fresh.assest[0];
               return (

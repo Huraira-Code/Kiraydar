@@ -77,6 +77,12 @@ const propertySchema = mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    agreementIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Agreement", // Updated to reference Property model
+      },
+    ],
   },
 });
 
