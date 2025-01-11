@@ -36,7 +36,7 @@ const createProperty = async (req, res) => {
         const city = "karachi";
         const area = "Defence";
         const address = req.body.address;
-
+        const coordinate = req.body.coordinate;
         const assest = imageUrlArray; // Use the updated array of image URLs
         const bedroom = req.body.bedroom;
         const bathroom = req.body.bathroom;
@@ -55,6 +55,7 @@ const createProperty = async (req, res) => {
           city: city,
           area: area,
           address: address,
+          coordinate:coordinate,
           assest: assest,
           bedroom: bedroom,
           bathroom: bathroom,

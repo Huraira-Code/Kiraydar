@@ -127,12 +127,18 @@ const IndiviualProperty = ({navigation}) => {
       console.log(error);
     }
   };
-
+  
   useEffect(() => {
     const handleLoadAndDecode = async () => {
       try {
         const decoded = await loadAndDecodeToken(); // Assuming loadAndDecodeToken does not require any parameters
         setDecodeData(decoded); // Assuming you want to log the decoded token
+        if(decoded.response._id == route.params.data.propertyowner){
+          setShowChat(false)
+          setShowAgreement(false)
+        }
+     
+        
         setLoading(false);
       } catch (error) {
         console.error('Error loading and decoding token:', error);

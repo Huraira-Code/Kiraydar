@@ -15,6 +15,7 @@ buildscript {
 
       // ADD THIS
       maven { url "https://www.jitpack.io" }
+      
     }
     dependencies {
         classpath ('com.android.tools.build:gradle:8.2.2') // Add or update this
@@ -22,5 +23,26 @@ buildscript {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
     }
 }
+
+
+// highlight-start
+allprojects {
+    repositories {
+        maven {
+            url 'https://api.mapbox.com/downloads/v2/releases/maven'
+            authentication {
+                basic(BasicAuthentication)
+            }
+            credentials {
+                // Do not change the username below.
+                // This should always be `mapbox` (not your username).
+                username = 'mapbox'
+                // Use the secret token you stored in gradle.properties as the password
+                password = project.properties['pk.eyJ1IjoiaHVyYWlyYXNoYWhpZCIsImEiOiJjbTVrcmlqaWQxZjN5MmtzN2s0cDhkbjNvIn0.wJjeZBrpoJF7Un50Qrl2VQ'] ?: ""
+            }
+        }
+    }
+}
+// highlight-end
 
 apply plugin: "com.facebook.react.rootproject"

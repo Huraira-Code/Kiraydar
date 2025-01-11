@@ -4,7 +4,7 @@ import React from 'react';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Entypo from 'react-native-vector-icons/Entypo';
 
-const AlertBox = ({callFunction, title, description, mute, success}) => {
+const AlertBox = ({callFunction, title, description,noCross, mute, success}) => {
   function handleClick() {
     console.log('Button clicked');
     callFunction(false);
@@ -20,7 +20,7 @@ const AlertBox = ({callFunction, title, description, mute, success}) => {
         />
 
         {/* Cross Button - Show only if mute is NOT passed */}
-        {!mute && (
+        {!noCross && (
           <Entypo
             onPress={handleClick}
             style={styles.crossButton}

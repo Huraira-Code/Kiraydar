@@ -54,7 +54,9 @@ const propertySchema = mongoose.Schema({
     type: Number,
     required: true,
   },
-
+  coordinate: {
+    type: Array,
+  },
   areaofhouse: {
     type: Number,
     required: true,

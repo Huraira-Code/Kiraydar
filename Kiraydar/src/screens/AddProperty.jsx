@@ -7,25 +7,208 @@ import {
   Pressable,
   ImageBackground,
   TouchableOpacity,
+  Modal,
 } from 'react-native';
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback, useRef, useMemo} from 'react';
+import {KeyboardAvoidingView} from 'react-native';
+import {debounce} from 'lodash';
+
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {Field, Formik} from 'formik';
 import Icon from 'react-native-vector-icons/Entypo';
 import AwesomeIcon from 'react-native-vector-icons/FontAwesome';
 import CommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {Picker as SelectPicker} from '@react-native-picker/picker';
-import {GooglePlacesAutocomplete} from 'react-native-google-places-autocomplete';
+import {GooglePlacesAutocomplete} from 'react-native-google-places-autocomplete ';
 import {ScrollView} from 'react-native-virtualized-view';
 import {Image} from 'react-native-svg';
 import ImagePicker from 'react-native-image-crop-picker';
 import axios from 'axios';
 import loadAndDecodeToken from '../Controller/LoadAndDecodeToken';
 import {BASE_URL} from '../api';
+import Loading from '../components/Loading';
+import AlertBox from '../components/AlertBox';
+import MapboxPlacesAutocomplete from 'react-native-mapbox-places-autocomplete';
+import {FlatList} from 'react-native-gesture-handler';
+import Mapbox from '@rnmapbox/maps';
 
-const AddProperty = () => {
+Mapbox.setAccessToken(
+  'pk.eyJ1IjoiaHVyYWlyYXNoYWhpZCIsImEiOiJjbTVrcmlqaWQxZjN5MmtzN2s0cDhkbjNvIn0.wJjeZBrpoJF7Un50Qrl2VQ',
+);
+const MyComponent = React.memo(({childDataExtract}) => {
+  const mapContainerRef = useRef();
+  const mapRef = useRef();
+
+  const [query, setQuery] = useState('');
+  const [places, setPlaces] = useState([]);
+  const [coordinates, setCoordinates] = useState([]);
+  const [markerPosition, setMarkerPosition] = useState([0, 0]);
+  const [showConfirmLocation, setshowConfirmLocation] = useState(false);
+  const [selectedPlace, setSelectedPlace] = useState(null); // State to store selected place
+
+  const triggerCallback = () => {
+    childDataExtract({query , markerPosition})
+    console.log("MERA KUMI" , coordinates )
+  }
+
+  const fetchCoordinates = async place => {
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+      place,
+    )}.json?access_token=pk.eyJ1IjoiaHVyYWlyYXNoYWhpZCIsImEiOiJjbTVrcmlqaWQxZjN5MmtzN2s0cDhkbjNvIn0.wJjeZBrpoJF7Un50Qrl2VQ`;
+
+    try {
+      const response = await axios.get(url);
+      const data = response.data;
+
+      // Extract coordinates from the first result
+      if (data.features && data.features.length > 0) {
+        const coordinates = data.features[0].geometry.coordinates; // [longitude, latitude]
+        console.log('Coordinates:', coordinates);
+        return coordinates;
+      } else {
+        console.log('No coordinates found for this place');
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching coordinates:', error);
+      return null;
+    }
+  };
+
+  const onMarkerDragEnd = e => {
+    const {longitude, latitude} = e.geometry.coordinates;
+    setCoordinates([`Longitude: ${longitude}`, `Latitude: ${latitude}`]);
+    setMarkerPosition([longitude, latitude]);
+  };
+
+  const fetchPlaces = async searchQuery => {
+    const url = `https://api.mapbox.com/search/searchbox/v1/suggest?q=${encodeURIComponent(
+      searchQuery,
+    )}&access_token=pk.eyJ1Ijoic2VhcmNoLW1hY2hpbmUtdXNlci0xIiwiYSI6ImNrNnJ6bDdzdzA5cnAza3F4aTVwcWxqdWEifQ.RFF7CVFKrUsZVrJsFzhRvQ&session_token=4ce0dcb6-18eb-47a5-947d-c23fe114280f&language=en&types=country%2Cregion%2Cdistrict%2Cpostcode%2Clocality%2Cplace%2Cneighborhood%2Caddress%2Cpoi%2Cstreet%2Ccategory`;
+
+    try {
+      const response = await axios.get(url);
+      setPlaces(response.data.suggestions); // Update places list
+    } catch (error) {
+      console.error('Error fetching places:', error);
+    }
+  };
+
+  const handleInputChange = text => {
+    setQuery(text);
+    fetchPlaces(text);
+  };
+
+  const SelectItem = async item => {
+    console.log('Selected Item:', item);
+    setSelectedPlace(item); // Set the selected place to show on the map
+    setQuery(`${item.name} - ${item.full_address}`);
+    setshowConfirmLocation(true);
+    // Fetch coordinates for the selected place
+    const coordinates = await fetchCoordinates(item.full_address); // Use place name or full address
+    if (coordinates) {
+      console.log(coordinates);
+      setMarkerPosition(coordinates); // Set marker position on the map
+      triggerCallback()
+    }
+  };
+  const onMapPress = event => {
+    console.log("PAreesa 1" , event.geometry.coordinates[0])
+    setCoordinates([`Longitude: ${event.geometry.coordinates[0]}`, `Latitude: ${event.geometry.coordinates[1]}`]);
+    const {geometry} = event;
+    setMarkerPosition(geometry.coordinates);
+  };
+
+  return (
+    <View style={{flex: 1}}>
+      {/* Search Input */}
+      <TextInput
+        style={styles.input}
+        placeholder="Search for nearby places"
+        value={query}
+        onChangeText={handleInputChange}
+      />
+
+      {/* Results List - only show when no place is selected */}
+      {!selectedPlace && (
+        <FlatList
+          data={places}
+          keyExtractor={item => item.id}
+          renderItem={({item}) => (
+            <TouchableOpacity
+              onPress={() => SelectItem(item)}
+              style={styles.resultItem}>
+              <Text>{item.name}</Text>
+              <Text style={{fontSize: 10}}>{item.full_address}</Text>
+            </TouchableOpacity>
+          )}
+        />
+      )}
+        <TouchableOpacity
+          onPress={() => {
+            setshowConfirmLocation(true);
+          }}
+          style={{backgroundColor: 'blue', width: '100%', padding: 10}}>
+          <Text style={{fontSize: 12, color: 'white', textAlign: 'center'}}>
+            Show Exact Location on Map
+          </Text>
+        </TouchableOpacity>
+      <Modal
+        transparent={true}
+        visible={showConfirmLocation}
+        animationType="fade"
+        style={{width: '90%'}}>
+        <View style={styles.overlay}>
+          <Mapbox.MapView
+            style={{height: '80%', width: '90%'}}
+            styleURL="mapbox://styles/mapbox/streets-v12"
+            onPress={onMapPress} // Add this to handle map clicks
+          >
+            <Mapbox.Camera
+              zoomLevel={15}
+              centerCoordinate={[markerPosition[0], markerPosition[1]]} // Set map center to selected place
+            />
+            <Mapbox.MarkerView
+              coordinate={markerPosition}
+              draggable
+              onDragEnd={onMarkerDragEnd}>
+              <View style={styles.marker} />
+            </Mapbox.MarkerView>
+          </Mapbox.MapView>
+          <TouchableOpacity
+            onPress={() => {
+              setshowConfirmLocation(false);
+              triggerCallback();
+
+            }}
+            style={{borderRadius: 10}}>
+            <Text
+              style={{backgroundColor: 'white', padding: 10, marginTop: 10}}>
+              Confirm Location
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+    </View>
+  );
+});
+
+const AddProperty = ({navigation}) => {
+
   const [decodeData, setDecodeData] = useState();
-  const [showloading, setShowLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [title, setTitle] = useState('');
+  const [description, setDescriptiion] = useState('');
+  const [data, setData] = useState();
+  const [place,setPlaces] = useState()
+  const [coordinate,setCoordinates] = useState();
+  
+  const childDataExtract = (childData) =>{
+    setCoordinates(childData.markerPosition)  
+    setPlaces(childData.query)  
+  }
+
   useEffect(() => {
     const handleLoadAndDecode = async () => {
       try {
@@ -43,7 +226,10 @@ const AddProperty = () => {
     console.log('camera');
   };
   console.log(uploadedImage);
-
+  const toggleShowAlert = stateChange => {
+    setShowAlert(stateChange);
+    navigation.navigate('IndiviualProperty', {data});
+  };
   const uploadPhotoFromDevice = async (setFieldValue, values) => {
     try {
       const images = await ImagePicker.openPicker({
@@ -99,6 +285,7 @@ const AddProperty = () => {
   };
 
   const uploadToServer = async data => {
+    setLoading(true);
     try {
       const formData = new FormData();
       formData.append('title', data.title);
@@ -107,7 +294,8 @@ const AddProperty = () => {
       formData.append('rent', data.rent);
       formData.append('advance', data.advance);
       formData.append('bachelor', data.Bachelor);
-      formData.append('address', data.address);
+      formData.append('address', place);
+      formData.append('coordinate', coordinate);
       formData.append('bedroom', data.bedroom);
       formData.append('bathroom', data.bathroom);
       formData.append('areaofhouse', data.area);
@@ -132,11 +320,15 @@ const AddProperty = () => {
           },
         },
       );
-      console.log('dataResponse', response);
-      alert('Property uploaded successfully!');
-      
+      setData(response.data.property);
+      console.log('dataResponse', response.data.property);
+      setLoading(false);
+      setShowAlert(true);
+      setTitle('Property Added Successfulyy');
+      setDescriptiion('Property has been successfully added to the system');
     } catch (error) {
       console.error('Upload error:', error);
+      setLoading(false);
     }
   };
 
@@ -147,9 +339,14 @@ const AddProperty = () => {
         style={{width: 1000, height: 1000}}
       />
       <ScrollView style={{paddingHorizontal: 15, backgroundColor: 'white'}}>
-        <Ionicons
-          style={{fontSize: 30, marginVertical: 10, color: 'black'}}
-          name="arrow-back-outline"></Ionicons>
+        <TouchableOpacity
+          onPress={() => {
+            navigation.goBack();
+          }}>
+          <Ionicons
+            style={{fontSize: 30, marginVertical: 10, color: 'black'}}
+            name="arrow-back-outline"></Ionicons>
+        </TouchableOpacity>
         <Text
           style={{
             fontSize: 25,
@@ -539,16 +736,7 @@ const AddProperty = () => {
                 </View>
               </View>
               <View style={{marginTop: 10}}>
-                <TextInput
-                  style={styles.InputText}
-                  onChangeText={handleChange('address')}
-                  onBlur={handleBlur('address')}
-                  value={values.address}
-                  placeholder="Address"
-                />
-                {errors.address && touched.address && (
-                  <Text style={styles.errorText}>{errors.address}</Text>
-                )}
+                <MyComponent childDataExtract={childDataExtract} />
               </View>
               <View style={styles.addImageContainer}>
                 <Pressable
@@ -586,6 +774,23 @@ const AddProperty = () => {
             </>
           )}
         </Formik>
+        <Modal
+          transparent={true}
+          visible={showAlert}
+          animationType="fade"
+          onRequestClose={() => setIsPopupVisible(false)}>
+          <AlertBox
+            callFunction={toggleShowAlert}
+            title={title}
+            description={description}
+            noCross={true}
+          />
+        </Modal>
+        <Modal transparent={true} visible={loading} animationType="fade">
+          <View style={styles.overlay}>
+            <Loading />
+          </View>
+        </Modal>
       </ScrollView>
     </>
   );
@@ -621,6 +826,14 @@ const styles = StyleSheet.create({
   addImageText: {
     fontSize: 15,
     fontFamily: 'Abel-Regular',
+  },
+  marker: {
+    width: 30,
+    height: 30,
+    backgroundColor: 'blue',
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: 'white',
   },
   PropertyContainer: {
     flexDirection: 'row',
@@ -676,5 +889,16 @@ const styles = StyleSheet.create({
     color: 'red',
     marginLeft: 5,
     marginTop: 5,
+  },
+  resultItem: {
+    paddingVertical: 10,
+    borderBottomColor: '#ccc',
+    borderBottomWidth: 1,
+  },
+  overlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Dark overlay
   },
 });
