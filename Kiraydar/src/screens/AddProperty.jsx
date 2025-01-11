@@ -109,7 +109,6 @@ const MyComponent = React.memo(({childDataExtract}) => {
     if (coordinates) {
       console.log(coordinates);
       setMarkerPosition(coordinates); // Set marker position on the map
-      triggerCallback()
     }
   };
   const onMapPress = event => {
@@ -179,7 +178,6 @@ const MyComponent = React.memo(({childDataExtract}) => {
             onPress={() => {
               setshowConfirmLocation(false);
               triggerCallback();
-
             }}
             style={{borderRadius: 10}}>
             <Text
@@ -201,12 +199,13 @@ const AddProperty = ({navigation}) => {
   const [title, setTitle] = useState('');
   const [description, setDescriptiion] = useState('');
   const [data, setData] = useState();
-  const [place,setPlaces] = useState()
-  const [coordinate,setCoordinates] = useState();
-  
+  const placeRef = useRef(null); // Replace useState for `place`
+  const coordinateRef = useRef(null); // Replace useState for `coordinate`
+
   const childDataExtract = (childData) =>{
-    setCoordinates(childData.markerPosition)  
-    setPlaces(childData.query)  
+    console.log(childData);
+    coordinateRef.current = childData.markerPosition;
+    placeRef.current = childData.query; 
   }
 
   useEffect(() => {
@@ -285,6 +284,7 @@ const AddProperty = ({navigation}) => {
   };
 
   const uploadToServer = async data => {
+    console.log("a")
     setLoading(true);
     try {
       const formData = new FormData();
@@ -294,8 +294,8 @@ const AddProperty = ({navigation}) => {
       formData.append('rent', data.rent);
       formData.append('advance', data.advance);
       formData.append('bachelor', data.Bachelor);
-      formData.append('address', place);
-      formData.append('coordinate', coordinate);
+      formData.append('address', placeRef.current );
+      formData.append('coordinate', coordinateRef.current);
       formData.append('bedroom', data.bedroom);
       formData.append('bathroom', data.bathroom);
       formData.append('areaofhouse', data.area);
@@ -372,8 +372,12 @@ const AddProperty = ({navigation}) => {
             address: '',
             images: [],
           }}
-          onSubmit={values => uploadToServer(values)}
-          validate={values => {
+          onSubmit={values => {
+            console.log('Submitting Form:', values);
+            uploadToServer(values);
+          }}
+          
+          validate={values => { 
             const errors = {};
             if (!values.title) {
               errors.title = 'Field is Required';
@@ -399,9 +403,8 @@ const AddProperty = ({navigation}) => {
             if (!values.peopleSharing) {
               errors.peopleSharing = 'Field is Required';
             }
-            if (!values.address) {
-              errors.address = 'Field is Required';
-            }
+           
+            console.log(errors)
             return errors;
           }}>
           {({
@@ -767,7 +770,10 @@ const AddProperty = ({navigation}) => {
                     backgroundColor: '#0a8ed9',
                     fontFamily: 'Abel-Regular',
                   }}
-                  onPress={handleSubmit}
+                  onPress={() => {
+                    console.log('Button Pressed');
+                    handleSubmit();
+                  }}                  
                   title="Add Property"
                 />
               </View>

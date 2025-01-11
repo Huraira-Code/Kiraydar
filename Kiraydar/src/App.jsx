@@ -44,11 +44,7 @@ function App() {
           <NavigationContainer>
             <StripeProvider publishableKey="pk_test_51Q90mr2LewuTEXoETZLxzjFCEMKSTkSPYtk2Fjjx4vvlwVbAVXbisDW0iUj1sIREf0gmIx25rIwAPzXpl1TeVj9B00AIEutf4J">
               <Stack.Navigator>
-              <Stack.Screen
-                  name="AddProperty"
-                  component={AddProperty}
-                  options={{headerShown: false}}
-                />
+              
               <Stack.Screen
                   name="Login"
                   component={Login}
@@ -67,6 +63,11 @@ function App() {
                 <Stack.Screen
                   name="ChatScreen"
                   component={ChatScreen}
+                  options={{headerShown: false}}
+                />
+                <Stack.Screen
+                  name="AddProperty"
+                  component={AddProperty}
                   options={{headerShown: false}}
                 />
                 <Stack.Screen

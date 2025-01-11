@@ -18,7 +18,11 @@ import axios from 'axios';
 import {BASE_URL} from '../api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import loadAndDecodeToken from '../Controller/LoadAndDecodeToken';
+import Mapbox from '@rnmapbox/maps';
 
+Mapbox.setAccessToken(
+  'pk.eyJ1IjoiaHVyYWlyYXNoYWhpZCIsImEiOiJjbTVrcmlqaWQxZjN5MmtzN2s0cDhkbjNvIn0.wJjeZBrpoJF7Un50Qrl2VQ',
+);
 import {
   useChatContext,
   Channel as StreamChannel,
@@ -33,7 +37,7 @@ const IndiviualProperty = ({navigation}) => {
   const [showAgreement, setShowAgreement] = useState(true);
   const [showChat, setShowChat] = useState(true);
   const [loading, setLoading] = useState(true);
-
+  const [showLocation,setShowLocation] = useState(false)
   const route = useRoute();
   const {initPaymentSheet, presentPaymentSheet} = useStripe();
   const {client} = useChatContext(); // Same client as in ChatScreen
@@ -324,6 +328,22 @@ const IndiviualProperty = ({navigation}) => {
           name="map-marker"></AwesomeIcon>
         <Text style={{color: 'black'}}>{route.params.data.address}</Text>
       </View>
+      <View>
+          <TouchableOpacity
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: 'blue',
+              paddingHorizontal: 20,
+              paddingVertical: 10,
+              marginHorizontal: 20,
+              marginTop:10
+            }} onPress={() => {setShowLocation(true)}}>
+            <Text style={{color: 'white' , textAlign:"center"}}>
+              Show Exact Location
+            </Text>
+          </TouchableOpacity>
+        </View>
       <View
         style={{
           marginTop: 15,
@@ -401,6 +421,39 @@ const IndiviualProperty = ({navigation}) => {
           <Loading />
         </View>
       </Modal>
+
+      <Modal
+              transparent={true}
+              visible={showLocation}
+              animationType="fade"
+              style={{width: '90%'}}>
+              <View style={styles.overlay}>
+                <Mapbox.MapView
+                  style={{height: '80%', width: '90%'}}
+                  styleURL="mapbox://styles/mapbox/streets-v12"
+                >
+                  <Mapbox.Camera
+                    zoomLevel={15}
+                    centerCoordinate={route.params.data.coordinate} // Set map center to selected place
+                  />
+                  <Mapbox.MarkerView
+                    coordinate={route.params.data.coordinate}
+                    >
+                    <View style={styles.marker} />
+                  </Mapbox.MarkerView>
+                </Mapbox.MapView>
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowLocation(false);
+                  }}
+                  style={{borderRadius: 10}}>
+                  <Text
+                    style={{backgroundColor: 'white', padding: 10, marginTop: 10}}>
+                    Close Location
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </Modal>
     </ScrollView>
   );
 };

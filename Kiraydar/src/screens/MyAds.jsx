@@ -42,7 +42,7 @@ const MyAds = ({navigation}) => {
     };
     handleLoadAndDecode();
   }, []);
-
+  
   useEffect(() => {
     setLoading(true);
     const fetchAds = async () => {

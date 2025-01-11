@@ -98,7 +98,7 @@ const myProperty = async (req, res) => {
     // Fetch data from the database
     const myData = await Property.find(
       { propertyowner: req.body.propertyowner },
-      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling peoplesharing"
+      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling peoplesharing coordinate"
     ).exec();
 
     // Check if any data was found
@@ -127,7 +127,7 @@ const MyAgreement = async (req, res) => {
     // Fetch data from the database
     const myData = await Property.find(
       { "propertySelling.agreementMaker": _id }, // Corrected the property path
-      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling peoplesharing"
+      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling peoplesharing coordinate"
     ).exec();
 
     // Check if any data was found
@@ -159,7 +159,7 @@ const freshRecommendation = async (req, res) => {
           { "propertySelling.agreement": { $ne: true } }, // Agreement maker not equal
         ],
       }, // Use $ne for not equal
-      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling peoplesharing"
+      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling peoplesharing coordinate"
     ).exec();
 
     // Check if any data was found
@@ -193,7 +193,7 @@ const buyerDetail = async (req, res) => {
           { "propertySelling.agreement": true }, // Agreement maker not equal
         ],
       }, // Use $ne for not equal
-      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling peoplesharing"
+      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling peoplesharing coordinate"
     )
       .populate("propertySelling.agreementMaker")
       .exec();
