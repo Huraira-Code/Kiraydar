@@ -25,6 +25,7 @@ buildscript {
 }
 
 
+
 // highlight-start
 allprojects {
     repositories {
@@ -38,7 +39,7 @@ allprojects {
                 // This should always be `mapbox` (not your username).
                 username = 'mapbox'
                 // Use the secret token you stored in gradle.properties as the password
-                password = project.properties['pk.eyJ1IjoiaHVyYWlyYXNoYWhpZCIsImEiOiJjbTVrcmlqaWQxZjN5MmtzN2s0cDhkbjNvIn0.wJjeZBrpoJF7Un50Qrl2VQ'] ?: ""
+                password = project.hasProperty('MAPBOX_DOWNLOADS_TOKEN') ? project.MAPBOX_DOWNLOADS_TOKEN : ''
             }
         }
     }

@@ -22,6 +22,8 @@ import loadAndDecodeToken from '../Controller/LoadAndDecodeToken';
 import axios from 'axios';
 import {BASE_URL} from '../api';
 import {StreamChat} from 'stream-chat';
+import GetLocation from 'react-native-get-location';
+import {PermissionsAndroid} from 'react-native';
 
 import Main from '../resource/HomeScreenMain.png';
 import BottomBar from '../components/BottomBar';
@@ -36,7 +38,57 @@ const MainScreen = ({navigation}) => {
   }
   const [recommendation, setRecommendation] = useState([]);
   const [decodeData, setDecodeData] = useState();
+  const [myLongitude, setMyLongitude] = useState();
+  const [myLatitude, setMyLatitude] = useState();
+  const [place,setPlaceName] = useState("")
   // const [decodedToken, setDecodedToken] = useState(null);
+
+  const requestLocationPermission = async () => {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        {
+          title: 'Location Permission',
+          message: 'This app needs access to your location.',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        },
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    } catch (err) {
+      console.warn(err);
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    const fetchLocation = async () => {
+      const hasPermission = await requestLocationPermission();
+      if (!hasPermission) {
+        console.warn('Location permission denied');
+        return;
+      }
+
+      console.log('Attempting to fetch location...');
+      GetLocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 60000,
+      })
+        .then(location => {
+          setMyLatitude(location.latitude);
+          setMyLongitude(location.longitude);
+          getPlaceFromCoordinates(location.latitude,location.longitude)
+          console.log('Location:', location);
+        })
+        .catch(error => {
+          const {code, message} = error;
+          console.error('Error code:', code, 'Message:', message);
+        });
+    };
+
+    fetchLocation();
+  }, []);
 
   useEffect(() => {
     const handleLoadAndDecode = async () => {
@@ -82,16 +134,67 @@ const MainScreen = ({navigation}) => {
           },
         );
         setRecommendation(response.data);
-        setLoading(false)
+        setLoading(false);
         console.log('this is data from property owner', response.data);
       } catch (err) {
         console.log(err);
-        setLoading(false)
+        setLoading(false);
       }
     };
     fetchRecommendation();
   }, [decodeData]);
 
+  function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+    var R = 6371; // Radius of the earth in km
+    var dLat = deg2rad(lat2 - lat1); // deg2rad below
+    var dLon = deg2rad(lon2 - lon1);
+    var a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(deg2rad(lat1)) *
+        Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    var d = R * c; // Distance in km
+    return d;
+  }
+
+  function deg2rad(deg) {
+    return deg * (Math.PI / 180);
+  }
+
+  const getPlaceFromCoordinates = async (latitude, longitude) => {
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=pk.eyJ1IjoiaHVyYWlyYXNoYWhpZCIsImEiOiJjbTVrcmlqaWQxZjN5MmtzN2s0cDhkbjNvIn0.wJjeZBrpoJF7Un50Qrl2VQ`
+      );
+      const data = await response.json();
+      if (data.features && data.features.length > 0) {        
+        setPlaceName(data.features[0].place_name); // Extract the place name
+      } else {
+        setPlaceName('No location found');
+      }
+    } catch (error) {
+      console.error('Error getting place from coordinates:', error);
+      setPlaceName('Error fetching location');
+    }
+  };
+
+  function isWithinDesiredDistance(fresh) {
+    // Check if the fresh object has valid coordinates
+    if (!fresh.coordinate || fresh.coordinate.length === 0) {
+        console.log("MY PRAEESA HURAIRA" , fresh.coordinate)
+        return false; // Skip items without valid coordinates
+    }
+
+    const location = fresh.coordinate[0].split(',').map(Number); // Convert coordinate string to numbers
+    const distance = getDistanceFromLatLonInKm(myLatitude, myLongitude, location[1], location[0]); // Calculate distance
+
+    console.log(distance);
+    
+    // Check if the distance is less than or equal to 20 km
+    return distance <= 20; 
+}
   return (
     <>
       <ScrollView style={{backgroundColor: 'white'}}>
@@ -108,7 +211,7 @@ const MainScreen = ({navigation}) => {
           <Image
             style={{width: '15%', height: 50, marginTop: 5}}
             source={Logo}></Image>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          <View style={{flexDirection: 'row', alignItems: 'center' , width:"50%" , paddingLeft: 6,}}>
             <Icon
               name="location-pin"
               style={{fontSize: 30, color: '#0a8ed9'}}></Icon>
@@ -118,7 +221,7 @@ const MainScreen = ({navigation}) => {
                 fontSize: 18,
                 color: 'black',
               }}>
-              Clifton 1, Karachi
+              {place}
             </Text>
           </View>
         </View>
@@ -265,45 +368,47 @@ const MainScreen = ({navigation}) => {
             Fresh recommendetations
           </Text>
           <ScrollView>
-            {recommendation.map((fresh, index) => {
-              const imageUrl = fresh.assest[0];
-              return (
-                <TouchableOpacity
-                  style={{width: '50%'}}
-                  onPress={() => {
-                    openProperty('IndiviualProperty', fresh);
-                  }}
-                  style={[styles.item2, {backgroundColor: 'white'}]}>
-                  <Image
-                    style={{
-                      marginHorizontal: 'auto',
-                      marginBottom: 10,
-                      width: '100%',
-                      height: 200,
+            {recommendation
+              .filter(fresh => isWithinDesiredDistance(fresh)) // Replace with your condition
+              .map((fresh, index) => {
+                const imageUrl = fresh.assest[0];
+                return (
+                  <TouchableOpacity
+                    style={{width: '50%'}}
+                    onPress={() => {
+                      openProperty('IndiviualProperty', fresh);
                     }}
-                    source={{
-                      uri: imageUrl,
-                    }}></Image>
-                  <Text
-                    style={{fontWeight: '800', color: 'black', fontSize: 20}}>
-                    Rs {fresh.rent}
-                  </Text>
-                  <Text style={{color: 'black'}}>{fresh.title}</Text>
-                  <Text style={{color: 'black'}}>{fresh.description}</Text>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      marginTop: 5,
-                    }}>
-                    <Icon
-                      style={{fontSize: 14, color: '#0a8ed9'}}
-                      name="location-pin"></Icon>
-                    <Text style={{fontSize: 12}}>{fresh.address}</Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
+                    style={[styles.item2, {backgroundColor: 'white'}]}>
+                    <Image
+                      style={{
+                        marginHorizontal: 'auto',
+                        marginBottom: 10,
+                        width: '100%',
+                        height: 200,
+                      }}
+                      source={{
+                        uri: imageUrl,
+                      }}></Image>
+                    <Text
+                      style={{fontWeight: '800', color: 'black', fontSize: 20}}>
+                      Rs {fresh.rent}
+                    </Text>
+                    <Text style={{color: 'black'}}>{fresh.title}</Text>
+                    <Text style={{color: 'black'}}>{fresh.description}</Text>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        marginTop: 5,
+                      }}>
+                      <Icon
+                        style={{fontSize: 14, color: '#0a8ed9'}}
+                        name="location-pin"></Icon>
+                      <Text style={{fontSize: 12}}>{fresh.address}</Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
           </ScrollView>
         </View>
         <Modal transparent={true} visible={loading} animationType="fade">

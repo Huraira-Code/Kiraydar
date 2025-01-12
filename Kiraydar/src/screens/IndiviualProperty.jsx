@@ -41,7 +41,7 @@ const IndiviualProperty = ({navigation}) => {
   const route = useRoute();
   const {initPaymentSheet, presentPaymentSheet} = useStripe();
   const {client} = useChatContext(); // Same client as in ChatScreen
-  console.log(route.params.data);
+  const location = route.params.data.coordinate[0].split(',').map(Number);
 
   const sendToChat = async () => {
     if (decodeData) {
@@ -68,6 +68,8 @@ const IndiviualProperty = ({navigation}) => {
       // 1. Create a Payment Intent
       const dataResponse = await axios.post(`${BASE_URL}/api/stripe/intents`, {
         amount: route.params.data.advance,
+        currency: 'PKR',  // Add the currency here
+
       });
   
       console.log("DataResponse", dataResponse.data);
@@ -99,14 +101,14 @@ const IndiviualProperty = ({navigation}) => {
         console.log(dataResponse.data.paymentIntent)
         
         // Uncomment the line below to save data in the database
-        await MakeAgreementDone(); 
+        // await MakeAgreementDone(); 
       }
     } catch (error) {
       console.log('Error in payment process:', error);
       Alert.alert('Error', error.message);
     }
   };
-  
+
   const MakeAgreementDone = async () => {
     const token = await AsyncStorage.getItem('token'); // Replace with your key
     try {
@@ -161,13 +163,7 @@ const IndiviualProperty = ({navigation}) => {
           paddingHorizontal: 10,
         }}>
         <Image style={{width: 60, height: 50, marginTop: 5}} source={Logo} />
-        <View style={{flexDirection: 'row', alignItems: 'center'}}>
-          <Icon name="location-pin" style={{fontSize: 30, color: '#0a8ed9'}} />
-          <Text
-            style={{fontFamily: 'Abel-Regular', fontSize: 18, color: 'black'}}>
-            Clifton 1, Karachi
-          </Text>
-        </View>
+        
       </View>
 
       <ScrollView
@@ -330,6 +326,7 @@ const IndiviualProperty = ({navigation}) => {
       </View>
       <View>
           <TouchableOpacity
+          
             style={{
               flexDirection: 'row',
               alignItems: 'center',
@@ -434,10 +431,10 @@ const IndiviualProperty = ({navigation}) => {
                 >
                   <Mapbox.Camera
                     zoomLevel={15}
-                    centerCoordinate={route.params.data.coordinate} // Set map center to selected place
+                    centerCoordinate={location} // Set map center to selected place
                   />
                   <Mapbox.MarkerView
-                    coordinate={route.params.data.coordinate}
+                    coordinate={location}
                     >
                     <View style={styles.marker} />
                   </Mapbox.MarkerView>
@@ -466,5 +463,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)', // Dark overlay
+  },
+  marker: {
+    width: 30,
+    height: 30,
+    backgroundColor: 'blue',
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: 'white',
   },
 });

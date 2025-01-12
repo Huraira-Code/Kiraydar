@@ -51,6 +51,8 @@ const MyComponent = React.memo(({childDataExtract}) => {
     console.log("MERA KUMI" , coordinates )
   }
 
+  
+
   const fetchCoordinates = async place => {
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
       place,
