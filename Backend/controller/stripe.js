@@ -5,14 +5,15 @@ const stripe = require("stripe")(
 const payment = async (req, res) => {
   try {
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: req.body.amount,
-      currency: "usd",
+      amount: req.body.amount * 100 ,
+      currency: "pkr",
       automatic_payment_methods: {
         enabled: true,
       },
     });
     res.json({ paymentIntent: paymentIntent.client_secret });
   } catch (e) {
+    console.log(e)
     res.status(400).json({
       error: e.message,
     });

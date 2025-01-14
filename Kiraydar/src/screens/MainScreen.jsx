@@ -24,10 +24,10 @@ import {BASE_URL} from '../api';
 import {StreamChat} from 'stream-chat';
 import GetLocation from 'react-native-get-location';
 import {PermissionsAndroid} from 'react-native';
-
 import Main from '../resource/HomeScreenMain.png';
 import BottomBar from '../components/BottomBar';
 import Loading from '../components/Loading';
+import { useFocusEffect } from '@react-navigation/native';
 const MainScreen = ({navigation}) => {
   const [loading, setLoading] = useState(true);
   function switchScreen(location) {
@@ -102,6 +102,28 @@ const MainScreen = ({navigation}) => {
     handleLoadAndDecode();
   }, []);
 
+  const fetchRecommendation = async () => {
+    console.log(
+      'this is decoded data from MainScreen',
+      decodeData.response._id,
+    );
+
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/api/property/freshRecommendation`,
+        {
+          propertyowner: decodeData.response._id,
+        },
+      );
+      setRecommendation(response.data);
+      setLoading(false);
+      console.log('this is data from property owner', response.data);
+    } catch (err) {
+      console.log(err);
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     console.log('EFFECT 1');
     if (decodeData) {
@@ -120,29 +142,14 @@ const MainScreen = ({navigation}) => {
       connect();
     }
 
-    const fetchRecommendation = async () => {
-      console.log(
-        'this is decoded data from MainScreen',
-        decodeData.response._id,
-      );
-
-      try {
-        const response = await axios.post(
-          `${BASE_URL}/api/property/freshRecommendation`,
-          {
-            propertyowner: decodeData.response._id,
-          },
-        );
-        setRecommendation(response.data);
-        setLoading(false);
-        console.log('this is data from property owner', response.data);
-      } catch (err) {
-        console.log(err);
-        setLoading(false);
-      }
-    };
+    
     fetchRecommendation();
   }, [decodeData]);
+
+  useFocusEffect(() => {
+    // setLoading(true)
+    fetchRecommendation();
+  });
 
   function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
     var R = 6371; // Radius of the earth in km

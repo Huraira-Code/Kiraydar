@@ -36,6 +36,7 @@ const userSchema = mongoose.Schema({
     type: Array,
     default: [],
   },
+  
 });
 
 const User = mongoose.model("User", userSchema);

@@ -30,6 +30,7 @@ import {
   MessageInput,
 } from 'stream-chat-react-native';
 import Loading from '../components/Loading';
+import DetailPropertySelling from './DetailPropertySelling';
 
 const IndiviualProperty = ({navigation}) => {
   const [data, setData] = useState();
@@ -37,12 +38,17 @@ const IndiviualProperty = ({navigation}) => {
   const [showAgreement, setShowAgreement] = useState(true);
   const [showChat, setShowChat] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [showLocation,setShowLocation] = useState(false)
+  const [showLocation, setShowLocation] = useState(false);
+  const [showDetailPage, setShowDetailPage] = useState(false);
   const route = useRoute();
   const {initPaymentSheet, presentPaymentSheet} = useStripe();
   const {client} = useChatContext(); // Same client as in ChatScreen
   const location = route.params.data.coordinate[0].split(',').map(Number);
-
+  console.log('MERA KUMI HOO APP', route.params.data);
+  const rejectAgreementEffect = async () => {
+    setShowAgreement(true);
+    setShowDetailPage(false);
+  };
   const sendToChat = async () => {
     if (decodeData) {
       console.log(route.params.data.propertyowner);
@@ -63,45 +69,44 @@ const IndiviualProperty = ({navigation}) => {
   };
 
   const onCheckout = async () => {
-
     try {
       // 1. Create a Payment Intent
       const dataResponse = await axios.post(`${BASE_URL}/api/stripe/intents`, {
         amount: route.params.data.advance,
-        currency: 'PKR',  // Add the currency here
-
+        currency: 'PKR', // Add the currency here
       });
-  
-      console.log("DataResponse", dataResponse.data);
-  
+
+      console.log('DataResponse', dataResponse.data);
+
       // 2. Initialize the Payment Sheet
       const initResponse = await initPaymentSheet({
         merchantDisplayName: 'notJust.dev',
         paymentIntentClientSecret: dataResponse.data.paymentIntent,
-        googlePay: true, // Enable Google Pay if required 
+        googlePay: true, // Enable Google Pay if required
       });
-     
+
       if (initResponse.error) {
         console.log('Error initializing payment sheet:', initResponse.error);
         Alert.alert('Error', initResponse.error.message);
         return;
       }
-  
+
       // 3. Present Payment Sheet
       const result = await presentPaymentSheet();
-  
+
       // 4. Handle Payment Result
       if (result.error) {
         console.log('Payment failed:', result.error);
         Alert.alert('Payment failed', result.error.message);
       } else {
-        console.log(result)
-        console.log('Payment successful!');
-        Alert.alert('Payment Successful', 'Your payment was successful!');
-        console.log(dataResponse.data.paymentIntent)
-        
+        console.log(result);
+
+        // Log the details of the payment intent
+        console.log('Payment Intent Details:', dataResponse.data.paymentIntent);
+        // console.log(dataResponse.data.paymentIntent)
+
         // Uncomment the line below to save data in the database
-        // await MakeAgreementDone(); 
+        await MakeAgreementDone(dataResponse.data.paymentIntent);
       }
     } catch (error) {
       console.log('Error in payment process:', error);
@@ -109,13 +114,14 @@ const IndiviualProperty = ({navigation}) => {
     }
   };
 
-  const MakeAgreementDone = async () => {
+  const MakeAgreementDone = async paymentIntent => {
     const token = await AsyncStorage.getItem('token'); // Replace with your key
     try {
       const response = await axios.post(
         `${BASE_URL}/api/property/makeAgreemnet`, // API endpoint
         {
           propertyId: route.params.data._id,
+          agreementPricePaid: route.params.data.advance,
         },
 
         {
@@ -125,26 +131,70 @@ const IndiviualProperty = ({navigation}) => {
         },
       );
       if (response.status == 200) {
-        Alert.alert(
-          'HURRAH , YOUR TRASCATION HAVE BEEN SENDED TO ESCROW NOW YOU CAN CHAT WITH OWNER',
-        );
+        console.log('a');
+
+        // 3. Make the second API call after the first one succeeds
+        try {
+          const secondResponse = await axios.post(
+            `${BASE_URL}/api/credit/createPayment`, // Replace with the second API endpoint
+            {
+              PaymentIntentId: paymentIntent, // Replace with the data required by the second API
+              TransactionAmount: route.params.data.advance,
+              InAccordance: route.params.data.title,
+              RecieverId: route.params.data.propertyowner,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`, // Include the JWT in the headers
+              },
+            },
+          );
+          console.log(secondResponse);
+          // 4. Handle the second API response (optional)
+          if (secondResponse.status === 201) {
+            console.log('Second API call was successful');
+            console.log('Payment successful!');
+            setShowAgreement(false);
+            setShowDetailPage(true);
+            Alert.alert(
+              'Payment Successful Transfered',
+              'Your payment was successful to Escrow Account Know you can see the details of the property',
+            );
+            // Add any further actions you'd like to handle after the second API success
+          }
+        } catch (secondError) {
+          // Handle errors for the second API call
+          console.error('Error in second API call:', secondError);
+          Alert.alert(
+            'Error',
+            'An error occurred while processing the second request.',
+          );
+        }
       }
     } catch (error) {
       console.log(error);
     }
   };
-  
+
   useEffect(() => {
     const handleLoadAndDecode = async () => {
       try {
         const decoded = await loadAndDecodeToken(); // Assuming loadAndDecodeToken does not require any parameters
         setDecodeData(decoded); // Assuming you want to log the decoded token
-        if(decoded.response._id == route.params.data.propertyowner){
-          setShowChat(false)
-          setShowAgreement(false)
+        if (decoded.response._id == route.params.data.propertyowner) {
+          setShowChat(false);
+          setShowAgreement(false);
+        } else {
+          if (route.params.data.propertySelling.agreementMaker) {
+            if (
+              decoded.response._id ==
+              route.params.data.propertySelling.agreementMaker
+            ) {
+              setShowAgreement(false);
+              setShowDetailPage(true);
+            }
+          }
         }
-     
-        
         setLoading(false);
       } catch (error) {
         console.error('Error loading and decoding token:', error);
@@ -163,7 +213,6 @@ const IndiviualProperty = ({navigation}) => {
           paddingHorizontal: 10,
         }}>
         <Image style={{width: 60, height: 50, marginTop: 5}} source={Logo} />
-        
       </View>
 
       <ScrollView
@@ -325,22 +374,24 @@ const IndiviualProperty = ({navigation}) => {
         <Text style={{color: 'black'}}>{route.params.data.address}</Text>
       </View>
       <View>
-          <TouchableOpacity
-          
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: 'blue',
-              paddingHorizontal: 20,
-              paddingVertical: 10,
-              marginHorizontal: 20,
-              marginTop:10
-            }} onPress={() => {setShowLocation(true)}}>
-            <Text style={{color: 'white' , textAlign:"center"}}>
-              Show Exact Location
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: 'blue',
+            paddingHorizontal: 20,
+            paddingVertical: 10,
+            marginHorizontal: 20,
+            marginTop: 10,
+          }}
+          onPress={() => {
+            setShowLocation(true);
+          }}>
+          <Text style={{color: 'white', textAlign: 'center'}}>
+            Show Exact Location
+          </Text>
+        </TouchableOpacity>
+      </View>
       <View
         style={{
           marginTop: 15,
@@ -378,6 +429,14 @@ const IndiviualProperty = ({navigation}) => {
           </View>
         </View>
       </View>
+      {showDetailPage ? (
+        <DetailPropertySelling
+          propertyId={route.params.data._id}
+          rejectAgreementEffect={rejectAgreementEffect}
+        />
+      ) : (
+        <></>
+      )}
       {showAgreement ? (
         <TouchableOpacity
           onPress={onCheckout}
@@ -413,6 +472,7 @@ const IndiviualProperty = ({navigation}) => {
       ) : (
         <></>
       )}
+
       <Modal transparent={true} visible={loading} animationType="fade">
         <View style={styles.overlay}>
           <Loading />
@@ -420,37 +480,34 @@ const IndiviualProperty = ({navigation}) => {
       </Modal>
 
       <Modal
-              transparent={true}
-              visible={showLocation}
-              animationType="fade"
-              style={{width: '90%'}}>
-              <View style={styles.overlay}>
-                <Mapbox.MapView
-                  style={{height: '80%', width: '90%'}}
-                  styleURL="mapbox://styles/mapbox/streets-v12"
-                >
-                  <Mapbox.Camera
-                    zoomLevel={15}
-                    centerCoordinate={location} // Set map center to selected place
-                  />
-                  <Mapbox.MarkerView
-                    coordinate={location}
-                    >
-                    <View style={styles.marker} />
-                  </Mapbox.MarkerView>
-                </Mapbox.MapView>
-                <TouchableOpacity
-                  onPress={() => {
-                    setShowLocation(false);
-                  }}
-                  style={{borderRadius: 10}}>
-                  <Text
-                    style={{backgroundColor: 'white', padding: 10, marginTop: 10}}>
-                    Close Location
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </Modal>
+        transparent={true}
+        visible={showLocation}
+        animationType="fade"
+        style={{width: '90%'}}>
+        <View style={styles.overlay}>
+          <Mapbox.MapView
+            style={{height: '80%', width: '90%'}}
+            styleURL="mapbox://styles/mapbox/streets-v12">
+            <Mapbox.Camera
+              zoomLevel={15}
+              centerCoordinate={location} // Set map center to selected place
+            />
+            <Mapbox.MarkerView coordinate={location}>
+              <View style={styles.marker} />
+            </Mapbox.MarkerView>
+          </Mapbox.MapView>
+          <TouchableOpacity
+            onPress={() => {
+              setShowLocation(false);
+            }}
+            style={{borderRadius: 10}}>
+            <Text
+              style={{backgroundColor: 'white', padding: 10, marginTop: 10}}>
+              Close Location
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };

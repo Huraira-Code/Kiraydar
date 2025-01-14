@@ -19,6 +19,8 @@ TouchableOpacity;
 import {BASE_URL} from '../api';
 import BottomBar from '../components/BottomBar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
+
 const MyAds = ({navigation}) => {
   console.log(process.env.API_URL);
 
@@ -42,79 +44,79 @@ const MyAds = ({navigation}) => {
     };
     handleLoadAndDecode();
   }, []);
+  const fetchAds = async () => {
+    console.log('this is ads');
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/api/property/findmyproperty`,
+        {
+          propertyowner: decodeData.response._id,
+        },
+      );
+      console.log('data from ads', response.data);
+      setBuyerScreen(false);
+
+      setAds(response.data);
+      setLoading(false);
+    } catch (err) {
+      console.log(err);
+
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchfavourite = async () => {
+    const token = await AsyncStorage.getItem('token'); // Replace with your key
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/api/property/myAgreement`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Include the JWT in the headers
+          },
+        },
+      );
+      console.log('response from favourite', response.data);
+      setBuyerScreen(false);
+
+      setAds(response.data);
+      setLoading(false);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchBuyer = async () => {
+    const token = await AsyncStorage.getItem('token'); // Replace with your key
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/api/property/myBuyers`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Include the JWT in the headers
+          },
+        },
+      );
+      console.log('response from buyer', response.data);
+
+      setAds(response.data);
+      setBuyerScreen(true);
+      setLoading(false);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   useEffect(() => {
     setLoading(true);
-    const fetchAds = async () => {
-      console.log('this is ads');
-      try {
-        const response = await axios.post(
-          `${BASE_URL}/api/property/findmyproperty`,
-          {
-            propertyowner: decodeData.response._id,
-          },
-        );
-        console.log('data from ads', response.data);
-        setBuyerScreen(false);
-
-        setAds(response.data);
-        setLoading(false);
-      } catch (err) {
-        console.log(err);
-
-        setError(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchfavourite = async () => {
-      const token = await AsyncStorage.getItem('token'); // Replace with your key
-      try {
-        const response = await axios.post(
-          `${BASE_URL}/api/property/myAgreement`,
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${token}`, // Include the JWT in the headers
-            },
-          },
-        );
-        console.log('response from favourite', response.data);
-        setBuyerScreen(false);
-
-        setAds(response.data);
-        setLoading(false);
-      } catch (err) {
-        setError(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchBuyer = async () => {
-      const token = await AsyncStorage.getItem('token'); // Replace with your key
-      try {
-        const response = await axios.post(
-          `${BASE_URL}/api/property/myBuyers`,
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${token}`, // Include the JWT in the headers
-            },
-          },
-        );
-        console.log('response from buyer', response.data);
-
-        setAds(response.data);
-        setBuyerScreen(true);
-        setLoading(false);
-      } catch (err) {
-        setError(err);
-      } finally {
-        setLoading(false);
-      }
-    };
     if (typeOfData == 'ads') {
       console.log('making milk');
       fetchAds();
@@ -124,6 +126,20 @@ const MyAds = ({navigation}) => {
       fetchBuyer();
     }
   }, [decodeData, typeOfData]);
+
+
+  //  useFocusEffect(() => {
+  //   if (typeOfData == 'ads') {
+  //     console.log('making milk');
+  //     fetchAds();
+  //   } else if (typeOfData == 'favourite') {
+  //     fetchfavourite();
+  //   } else if (typeOfData == 'buyers') {
+  //     fetchBuyer();
+  //   }
+      
+  //   });
+  
   return (
     <>
       <ScrollView style={{paddingHorizontal: 15, backgroundColor: 'white'}}>

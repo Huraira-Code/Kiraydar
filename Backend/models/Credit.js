@@ -1,30 +1,32 @@
 const mongoose = require("mongoose");
 
 const creditSchema = mongoose.Schema({
-  PropertyId: {
+  PaymentIntentId: {
     type: String,
     required: true,
   },
-  transferId: {
+  TransactionType: {
     type: String,
+    enum: ["Escrow", "Transfered"],
     required: true,
   },
-  recieverId: {
-    type: String,
+  TransactionAmount: {
+    type: Number,
     required: true,
   },
-  StripeIntent: {
+  InAccordance: {
     type: String,
-    default: null,
+    default: true,
   },
-  Type: {
-    type:String,
-    default:null,
+  InAccordancePropertyId: {
+    type: String,
   },
-  SendedTo:{
-    type:String,
-    default:null
-  }
+  SendedId: {
+    type: String,
+  },
+  RecieverId: {
+    type: String,
+  },
 });
 
 const Credit = mongoose.model("Credit", creditSchema);

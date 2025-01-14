@@ -33,6 +33,7 @@ import {
 } from 'stream-chat-react-native';
 import Channel from './screens/Channel';
 import loadAndDecodeToken from './Controller/LoadAndDecodeToken';
+import DetailPropertySelling from './screens/DetailPropertySelling';
 const client = StreamChat.getInstance('f4jd4sm2swcv');
 function App() {
  
@@ -44,7 +45,7 @@ function App() {
           <NavigationContainer>
             <StripeProvider publishableKey="pk_test_51Q90mr2LewuTEXoETZLxzjFCEMKSTkSPYtk2Fjjx4vvlwVbAVXbisDW0iUj1sIREf0gmIx25rIwAPzXpl1TeVj9B00AIEutf4J">
               <Stack.Navigator>
-              
+             
               <Stack.Screen
                   name="Login"
                   component={Login}

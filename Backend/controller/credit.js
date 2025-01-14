@@ -4,21 +4,24 @@ const jwt = require("jsonwebtoken");
 
 const CreatePayment = async (req, res) => {
   // Move the code to extract title and create property inside the Promise.all().then() block
-   
+  const authHeader = req.headers.authorization;
+  const token = authHeader.split(" ")[1];
   try {
-    const propertyId = req.body.propertyId;
-    const transferId = req.body.transferId;
-    const recieverId = req.body.recieverId;
-    const StripeIntent = req.body.StripeIntent;
-    const Type = req.body.Type;
-    const SendedTo = req.body.SendedTo;
-
+    const verify = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    const _id = verify.response._id;
+    const TransactionType = "Escrow";
+    const PaymentIntentId = req.body.PaymentIntentId;
+    const TransactionAmount = req.body.TransactionAmount;
+    const InAccordance = req.body.InAccordance;
+    const SendedId = _id;
+    const RecieverId = req.body.RecieverId;
     const myData = new Credit({
-      transferId: req.body.transferId,
-      recieverId: req.body.recieverId,
-      StripeIntent: req.body.StripeIntent,
-      Type: req.body.Type,
-      SendedTo: req.body.SendedTo
+      PaymentIntentId: PaymentIntentId,
+      TransactionType: TransactionType, // "Escrow" as the transaction type
+      TransactionAmount: TransactionAmount,
+      InAccordance: InAccordance,
+      SendedId: SendedId,
+      RecieverId: RecieverId,
     });
 
     // Save the new property to the database

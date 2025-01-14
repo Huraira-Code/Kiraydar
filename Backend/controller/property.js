@@ -290,7 +290,7 @@ const agreementDetailShow = async (req, res) => {
     // Extract ownerId and agreementMakerId
     const propertyOwner = property.propertyowner;
     const propertyBuyerId = property.propertySelling.agreementMaker;
-    const AgreementDetail = property.propertySelling.agreementIds[0];
+    const AgreementDetail = property.propertySelling.agreementIds[property.propertySelling.agreementIds.length - 1];
     console.log(propertyOwner);
     console.log(AgreementDetail.toString());
     console.log(propertyBuyerId.toString());
@@ -356,8 +356,7 @@ const AccceptAgreement = async (req, res) => {
   } catch (error) {
     console.error(error);
   }
-  res.status(500).json({ message: "Internal server error" });
-};
+};  
 
 const RejectAgreement = async (req, res) => {
   const authHeader = req.headers.authorization;
