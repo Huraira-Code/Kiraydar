@@ -43,6 +43,7 @@ const {
   RejectAgreement,
   MakeNegotationPrice,
   pricePaid,
+  DealDone
 } = require("../controller/property");
 
 //Middleware for authenticating routes
@@ -78,6 +79,7 @@ router.route("/acceptAgreement").post(AccceptAgreement);
 router.route("/rejectAgreement").post(RejectAgreement);
 router.route("/makeNegotationPrice").post(MakeNegotationPrice);
 router.route("/pricePaid").post(pricePaid);
+router.route("/dealDone").post(DealDone);
 
 // router.route("/issueCreated").get(authenticateToken, issueCreated); //done
 // router.route("/issueUpvote").post(authenticateToken, issueUpvote); //done

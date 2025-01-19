@@ -48,6 +48,7 @@ const SignUp = ({navigation}) => {
           username: data.userName,
           phonenumber: data.phoneNumber,
           password: data.password,
+          bankAccount : data.bankAccount
         },
       );
 
@@ -97,6 +98,7 @@ const SignUp = ({navigation}) => {
           cnic: '',
           userName: '',
           phoneNumber: '',
+          bankAccount:"",
           password: '',
         }}
         onSubmit={values => {
@@ -167,6 +169,21 @@ const SignUp = ({navigation}) => {
               onBlur={handleBlur('phoneNumber')}
               value={values.phoneNumber}
               placeholder="Phone Number"
+              keyboardType="numeric"
+            />
+            <TextInput
+              style={{
+                borderWidth: 1,
+                borderRadius: 12,
+                marginTop: 0,
+                marginBottom: 25,
+                paddingLeft: 10,
+                borderColor: 'grey',
+              }}
+              onChangeText={handleChange('bankAccount')}
+              onBlur={handleBlur('bankAccount')}
+              value={values.bankAccount}
+              placeholder="Enter Your Bank Account"
               keyboardType="numeric"
             />
             <TextInput

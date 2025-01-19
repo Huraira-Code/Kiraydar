@@ -9,6 +9,10 @@ const propertySchema = mongoose.Schema({
     type: String,
     required: true,
   },
+  rented : {
+    type:Boolean,
+    default:false,
+  },
   type: {
     type: String,
     required: true,

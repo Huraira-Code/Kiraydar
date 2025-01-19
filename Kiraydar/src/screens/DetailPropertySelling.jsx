@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -9,17 +10,148 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+
 import Logo from '../resource/logo.png';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import {BASE_URL} from '../api';
-function DetailPropertySelling({propertyId , rejectAgreementEffect}) {
+function DetailPropertySelling({propertyId, rejectAgreementEffect, rented}) {
   console.log(propertyId);
   const [detail, setDetail] = useState();
   const [loading, setLoading] = useState(true);
   const [price, setPrice] = useState(''); // State to store the input value
+  const [agreementCompleted, setAgreementCompleted] = useState(false);
+  const finalizeDeal = async PropertyId => {
+    setLoading(true);
+    const token = await AsyncStorage.getItem('token'); // Replace with your key
+    // Check if detail and agreementDetails exist
+    if (detail && detail.agreementDetails) {
+      const agreementPricePaid = Number(
+        detail.agreementDetails.agreementPricePaid,
+      );
+      const negotiationPrice = Number(detail.agreementDetails.negotationPrice);
+      console.log('A', agreementPricePaid);
+      console.log('b ', negotiationPrice);
+      console.log(
+        'the',
+        !isNaN(agreementPricePaid) && !isNaN(negotiationPrice),
+      );
 
-  const RejectAgreement = async (agreementId , PropertyId) => {
+      // Check if the prices are valid numbers
+      if (!isNaN(agreementPricePaid) && !isNaN(negotiationPrice)) {
+        let result = Math.round(
+          (agreementPricePaid + negotiationPrice) * 0.0036 * 100,
+        );
+        console.log(result); // Output the final rounded result
+        try {
+          const response = await axios.post(
+            `${BASE_URL}/api/property/dealDone`,
+            {
+              propertyId: PropertyId,
+              amount: result,
+              recipientID: detail.owner.BankAountStripeId,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`, // Include the JWT in the headers
+              },
+            },
+          );
+          if (response.status == 200) {
+            const agreementPricePaid = Number(
+              detail.agreementDetails.agreementPricePaid,
+            );
+            const negotiationPrice = Number(
+              detail.agreementDetails.negotationPrice,
+            );
+            console.log(
+              'the total amount',
+              agreementPricePaid + negotiationPrice,
+            );
+            result = agreementPricePaid + negotiationPrice;
+            try {
+              const secondResponse = await axios.post(
+                `${BASE_URL}/api/credit/createPayment`, // Replace with the second API endpoint
+                {
+                  PaymentIntentId: response.data.transfer.id, // Replace with the data required by the second API
+                  TransactionAmount: result,
+                  TransactionType: 'Transfered',
+                  InAccordance: detail.property.title,
+                  InAccordancePropertyId: PropertyId,
+                  RecieverId: detail.owner._id,
+                  SendedId : detail.agreementMakerID._id
+                },
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`, // Include the JWT in the headers
+                  },
+                },
+              );
+
+              console.log(secondResponse);
+              // 4. Handle the second API response (optional)
+              if (secondResponse.status === 201) {
+                try {
+                  const thirdResponse = await axios.post(
+                    `${BASE_URL}/api/credit/updateEscrow`, // Replace with the second API endpoint
+                    {
+                      SendedId: detail.agreementMakerID._id,
+                      RecieverId: detail.property.propertyowner,
+                      InAccordancePropertyId: PropertyId,
+                      TransactionTypeConvert: 'Forward',
+                    },
+                    {
+                      headers: {
+                        Authorization: `Bearer ${token}`, // Include the JWT in the headers
+                      },
+                    },
+                  );
+                  if (thirdResponse.status == 200) {
+                    setLoading(false);
+                    setAgreementCompleted(true);
+                  }
+                } catch (thirdError) {
+                  console.error('Error in second API call:', thirdError);
+                }
+              }
+            } catch (secondError) {
+              // Handle errors for the second API call
+              console.error('Error in second API call:', secondError);
+            }
+          }
+        } catch (err) {
+          setLoading(false);
+
+          // Log detailed error information
+          if (err.response) {
+            // For HTTP requests (e.g., axios errors)
+            console.log('Response Error:', err.response.data); // Server response data
+            console.log('Status Code:', err.response.status); // HTTP status code
+            console.log('Headers:', err.response.headers); // HTTP headers
+          } else if (err.request) {
+            // Request was made but no response received
+            console.log('Request Error:', err.request);
+          } else {
+            // General errors (e.g., syntax errors, runtime errors)
+            console.log('Error Message:', err.message);
+            console.log('Error Stack:', err.stack);
+            console.log('Error Name:', err.name);
+          }
+
+          // Optional: Show a user-friendly error message
+          alert(`An error occurred: ${err.message}`);
+        }
+      } else {
+        console.log('Invalid price values.');
+      }
+    } else {
+      console.log('detail or agreementDetails is undefined');
+    }
+  };
+
+  const RejectAgreement = async (agreementId, PropertyId) => {
+    console.log('motai motai', detail.agreementMakerID._id);
+
     setLoading(true);
     const token = await AsyncStorage.getItem('token'); // Replace with your key
     try {
@@ -27,7 +159,11 @@ function DetailPropertySelling({propertyId , rejectAgreementEffect}) {
         `${BASE_URL}/api/property/rejectAgreement`,
         {
           Id: agreementId,
-          propertyId :PropertyId
+          propertyId: PropertyId,
+          amount: Math.round(
+            detail.agreementDetails.agreementPricePaid * 0.0036 * 100,
+          ),
+          recipientId: detail.agreementMakerID.BankAountStripeId,
         },
         {
           headers: {
@@ -35,36 +171,83 @@ function DetailPropertySelling({propertyId , rejectAgreementEffect}) {
           },
         },
       );
-      console.log()
+      console.log();
       if (response.status == 200) {
-        setLoading(false)
-        rejectAgreementEffect()
+        try {
+          const secondResponse = await axios.post(
+            `${BASE_URL}/api/credit/createPayment`, // Replace with the second API endpoint
+            {
+              PaymentIntentId: response.data.transfer.id, // Replace with the data required by the second API
+              TransactionAmount: detail.agreementDetails.agreementPricePaid,
+              TransactionType: 'Transfered',
+              InAccordance: detail.property.title,
+              InAccordancePropertyId: PropertyId,
+              RecieverId: detail.agreementMakerID._id,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`, // Include the JWT in the headers
+              },
+            },
+          );
+
+          console.log(secondResponse);
+          // 4. Handle the second API response (optional)
+          if (secondResponse.status === 201) {
+            try {
+              const thirdResponse = await axios.post(
+                `${BASE_URL}/api/credit/updateEscrow`, // Replace with the second API endpoint
+                {
+                  SendedId:detail.agreementMakerID._id,
+                  RecieverId: detail.property.propertyowner,
+                  InAccordancePropertyId: PropertyId,
+                  TransactionTypeConvert: 'Refund',
+                },
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`, // Include the JWT in the headers
+                  },
+                },
+              );
+              if (thirdResponse.status == 200) {
+                setLoading(false);
+                rejectAgreementEffect();
+              }
+            } catch (thirdError) {
+              console.error('Error in second API call:', thirdError);
+            }
+          }
+        } catch (secondError) {
+          // Handle errors for the second API call
+          console.error('Error in second API call:', secondError);
+        }
+        console.log(response);
       }
     } catch (err) {
       setLoading(false);
-    
+
       // Log detailed error information
       if (err.response) {
         // For HTTP requests (e.g., axios errors)
-        console.log("Response Error:", err.response.data); // Server response data
-        console.log("Status Code:", err.response.status); // HTTP status code
-        console.log("Headers:", err.response.headers);    // HTTP headers
+        console.log('Response Error:', err.response.data); // Server response data
+        console.log('Status Code:', err.response.status); // HTTP status code
+        console.log('Headers:', err.response.headers); // HTTP headers
       } else if (err.request) {
         // Request was made but no response received
-        console.log("Request Error:", err.request);
+        console.log('Request Error:', err.request);
       } else {
         // General errors (e.g., syntax errors, runtime errors)
-        console.log("Error Message:", err.message);
-        console.log("Error Stack:", err.stack);
-        console.log("Error Name:", err.name);
+        console.log('Error Message:', err.message);
+        console.log('Error Stack:', err.stack);
+        console.log('Error Name:', err.name);
       }
-      
+
       // Optional: Show a user-friendly error message
       alert(`An error occurred: ${err.message}`);
     }
-  }
+  };
 
-  const AcceptAgreement = async (agreementId) => {
+  const AcceptAgreement = async agreementId => {
     setLoading(true);
     const token = await AsyncStorage.getItem('token'); // Replace with your key
     try {
@@ -87,23 +270,23 @@ function DetailPropertySelling({propertyId , rejectAgreementEffect}) {
       }
     } catch (err) {
       setLoading(false);
-    
+
       // Log detailed error information
       if (err.response) {
         // For HTTP requests (e.g., axios errors)
-        console.log("Response Error:", err.response.data); // Server response data
-        console.log("Status Code:", err.response.status); // HTTP status code
-        console.log("Headers:", err.response.headers);    // HTTP headers
+        console.log('Response Error:', err.response.data); // Server response data
+        console.log('Status Code:', err.response.status); // HTTP status code
+        console.log('Headers:', err.response.headers); // HTTP headers
       } else if (err.request) {
         // Request was made but no response received
-        console.log("Request Error:", err.request);
+        console.log('Request Error:', err.request);
       } else {
         // General errors (e.g., syntax errors, runtime errors)
-        console.log("Error Message:", err.message);
-        console.log("Error Stack:", err.stack);
-        console.log("Error Name:", err.name);
+        console.log('Error Message:', err.message);
+        console.log('Error Stack:', err.stack);
+        console.log('Error Name:', err.name);
       }
-      
+
       // Optional: Show a user-friendly error message
       alert(`An error occurred: ${err.message}`);
     }
@@ -138,6 +321,9 @@ function DetailPropertySelling({propertyId , rejectAgreementEffect}) {
     }
   };
   const fetchAgreementDetails = async () => {
+    if (rented == true) {
+      setAgreementCompleted(true);
+    }
     const token = await AsyncStorage.getItem('token'); // Replace with your key
     try {
       const response = await axios.post(
@@ -226,32 +412,33 @@ function DetailPropertySelling({propertyId , rejectAgreementEffect}) {
             PKR
           </Text>
         </View>
-        {!detail.agreementDetails.agreementBuyer && !detail.agreementDetails.agreementOwner && (
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginTop: 20,
-          }}>
-          <Text style={{color: 'black', width: '40%'}}>
-            Negotating Price Offerering:{' '}
-          </Text>
-          <TextInput
-            style={styles.textInput}
-            keyboardType="numeric"
-            placeholder="Enter price"
-            value={price} // Bind the input value to the state
-            onChangeText={text => setPrice(text)} // Update the state when the input changes
-          />
-          <TouchableOpacity
-            onPress={() => {
-              MakeNegotationPrice(detail.agreementDetails._id, price);
-            }}>
-            <Text>send</Text>
-          </TouchableOpacity>
-        </View>
-        )}
+        {!detail.agreementDetails.agreementBuyer &&
+          !detail.agreementDetails.agreementOwner && (
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginTop: 20,
+              }}>
+              <Text style={{color: 'black', width: '40%'}}>
+                Negotating Price Offerering:{' '}
+              </Text>
+              <TextInput
+                style={styles.textInput}
+                keyboardType="numeric"
+                placeholder="Enter price"
+                value={price} // Bind the input value to the state
+                onChangeText={text => setPrice(text)} // Update the state when the input changes
+              />
+              <TouchableOpacity
+                onPress={() => {
+                  MakeNegotationPrice(detail.agreementDetails._id, price);
+                }}>
+                <Text>send</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         <View
           style={{
             flexDirection: 'row',
@@ -313,10 +500,18 @@ function DetailPropertySelling({propertyId , rejectAgreementEffect}) {
             </Text>
           </TouchableOpacity>
         </View>
-       
       </View>
-      <TouchableOpacity
-          onPress={()=> {RejectAgreement(detail.agreementDetails._id ,detail.agreementDetails.PropertyId ) }}
+      {!(
+        detail.agreementDetails.agreementBuyer &&
+        detail.agreementDetails.agreementOwner
+      ) && (
+        <TouchableOpacity
+          onPress={() => {
+            RejectAgreement(
+              detail.agreementDetails._id,
+              detail.agreementDetails.PropertyId,
+            );
+          }}
           style={{
             backgroundColor: 'red',
             marginHorizontal: 10,
@@ -325,29 +520,70 @@ function DetailPropertySelling({propertyId , rejectAgreementEffect}) {
             marginBottom: 20,
           }}>
           <Text style={{color: 'white', fontSize: 15, textAlign: 'center'}}>
-           Reject Deal
+            Reject Deal
           </Text>
-          <Text style={{color: 'white', fontSize: 10, textAlign: 'center' , paddingHorizontal:10}}>
-           Your are rejecting the deal once rejected you hahve to start the process all over again you money in escrow will be send back to you if you are a agreementBuyer
+          <Text
+            style={{
+              color: 'white',
+              fontSize: 10,
+              textAlign: 'center',
+              paddingHorizontal: 10,
+            }}>
+            Your are rejecting the deal once rejected you hahve to start the
+            process all over again you money in escrow will be send back to you
+            if you are a agreementBuyer
           </Text>
         </TouchableOpacity>
-      {detail.agreementDetails.agreementBuyer && detail.agreementDetails.agreementOwner && (
+      )}
+      {detail.agreementDetails.agreementBuyer &&
+        detail.agreementDetails.agreementOwner &&
+        !agreementCompleted && (
+          <TouchableOpacity
+            onPress={() => {
+              finalizeDeal(detail.agreementDetails.PropertyId);
+            }}
+            style={{
+              backgroundColor: 'green',
+              marginHorizontal: 20,
+              paddingVertical: 10,
+              borderRadius: 20,
+              marginBottom: 20,
+            }}>
+            <Text style={{color: 'white', fontSize: 15, textAlign: 'center'}}>
+              Finalize Deal
+            </Text>
+            <Text
+              style={{
+                color: 'white',
+                fontSize: 10,
+                textAlign: 'center',
+                paddingHorizontal: 10,
+              }}>
+              Your Advance is in escrow you can now see owner Information Use
+              this feature to furthur negotiate on things
+            </Text>
+          </TouchableOpacity>
+        )}
 
-        <TouchableOpacity
+      {agreementCompleted && (
+        <View
           style={{
             backgroundColor: 'green',
             marginHorizontal: 20,
             paddingVertical: 10,
-            borderRadius: 20,
+            borderRadius: 2,
             marginBottom: 20,
           }}>
-          <Text style={{color: 'white', fontSize: 15, textAlign: 'center'}}>
-           Finalize Deal
+          <Text
+            style={{
+              color: 'white',
+              fontSize: 15,
+              textAlign: 'center',
+              paddingHorizontal: 10,
+            }}>
+            Agreement Successfully Completed
           </Text>
-          <Text style={{color: 'white', fontSize: 10, textAlign: 'center' , paddingHorizontal:10}}>
-           Your Advance is in escrow you can now see owner Information Use this feature to furthur negotiate on things
-          </Text>
-        </TouchableOpacity>
+        </View>
       )}
     </View>
   );

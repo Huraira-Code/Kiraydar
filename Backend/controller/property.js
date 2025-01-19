@@ -4,6 +4,9 @@ const Property = require("../models/property");
 const jwt = require("jsonwebtoken");
 const Agreement = require("../models/Agreement");
 const User = require("../models/user");
+const stripe = require("stripe")(
+  "sk_test_51Q90mr2LewuTEXoE0He3jMvaViGCuev6fx1m08QZ8w6ShDO14m8WUI1ze8l6MEpmNPKS2fe67NTnFkIGbEQLYmdg00VwD6Dqlk"
+);
 
 
 const createProperty = async (req, res) => {
@@ -98,7 +101,7 @@ const myProperty = async (req, res) => {
     // Fetch data from the database
     const myData = await Property.find(
       { propertyowner: req.body.propertyowner },
-      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling peoplesharing coordinate"
+      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling peoplesharing coordinate rented"
     ).exec();
 
     // Check if any data was found
@@ -127,7 +130,7 @@ const MyAgreement = async (req, res) => {
     // Fetch data from the database
     const myData = await Property.find(
       { "propertySelling.agreementMaker": _id }, // Corrected the property path
-      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling peoplesharing coordinate"
+      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling peoplesharing coordinate rented"
     ).exec();
 
     // Check if any data was found
@@ -159,7 +162,7 @@ const freshRecommendation = async (req, res) => {
           { "propertySelling.agreement": { $ne: true } }, // Agreement maker not equal
         ],
       }, // Use $ne for not equal
-      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling peoplesharing coordinate"
+      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling peoplesharing coordinate rented"
     ).exec();
 
     // Check if any data was found
@@ -193,7 +196,7 @@ const buyerDetail = async (req, res) => {
           { "propertySelling.agreement": true }, // Agreement maker not equal
         ],
       }, // Use $ne for not equal
-      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling peoplesharing coordinate"
+      "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling peoplesharing coordinate rented"
     )
       .populate("propertySelling.agreementMaker")
       .exec();
@@ -368,7 +371,9 @@ const RejectAgreement = async (req, res) => {
   const token = authHeader.split(" ")[1];
   const agreementId = req.body.Id;
   const propertId = req.body.propertyId;
-
+  const amount = req.body.amount ;
+  const recipientId = req.body.recipientId
+  console.log(req.body.recipientId)
   try {
     // Verify token
     const verify = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
@@ -388,7 +393,13 @@ const RejectAgreement = async (req, res) => {
     // Save updated agreement
     await agreement.save();
     await property.save();
-    res.status(200).json({ message: "Agreement Rejected successfully" });
+      // Create a Transfer to the connected account
+      const transfer = await stripe.transfers.create({
+        amount: amount, // amount in cents
+        currency: "usd",
+        destination: recipientId, // Connected Account ID (acct_...)
+      });
+    res.status(200).json({ message: "Agreement Rejected successfully" , transfer });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
@@ -458,6 +469,43 @@ const pricePaid = async (req, res) => {
 };
 
 
+const DealDone = async (req, res) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ message: "Authorization header missing" });
+  }
+
+  const token = authHeader.split(" ")[1];
+  const propertId = req.body.propertyId;
+  const recipientId = req.body.recipientID;
+  const amount = req.body.amount
+  console.log(amount)
+   try {
+    // Verify token
+    const verify = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+    // Find agreement by ID
+    const property = await Property.findById(propertId);
+    property.rented = true;
+
+    // Save updated agreement
+    await property.save();
+      // Create a Transfer to the connected account
+      const transfer = await stripe.transfers.create({
+        amount: amount, // amount in cents
+        currency: "usd",
+        destination: recipientId, // Connected Account ID (acct_...)
+      });
+    res.status(200).json({ message: "Agreement Rejected successfully" , transfer });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+
 
 // const myProperty = async (req, res) => {
 //   try {
@@ -482,5 +530,6 @@ module.exports = {
   AccceptAgreement,
   RejectAgreement,
   MakeNegotationPrice,
-  pricePaid
+  pricePaid,
+  DealDone
 };

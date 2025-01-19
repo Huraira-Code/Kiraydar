@@ -7,7 +7,7 @@ const creditSchema = mongoose.Schema({
   },
   TransactionType: {
     type: String,
-    enum: ["Escrow", "Transfered"],
+    enum: ["Escrow", "Transfered" , "Refund" , "Forward"],
     required: true,
   },
   TransactionAmount: {

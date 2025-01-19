@@ -44,15 +44,14 @@ const IndiviualProperty = ({navigation}) => {
   const {initPaymentSheet, presentPaymentSheet} = useStripe();
   const {client} = useChatContext(); // Same client as in ChatScreen
   const location = route.params.data.coordinate[0].split(',').map(Number);
-  console.log('MERA KUMI HOO APP', route.params.data);
   const rejectAgreementEffect = async () => {
     setShowAgreement(true);
     setShowDetailPage(false);
   };
+
   const sendToChat = async () => {
     if (decodeData) {
-      console.log(route.params.data.propertyowner);
-      console.log(decodeData.response._id);
+      console.log("thi sis men" , decodeData.response._id);
       const channel = client.channel(
         'messaging',
         `${decodeData.response._id}-${route.params.data._id}`, // Unique channel ID
@@ -76,7 +75,6 @@ const IndiviualProperty = ({navigation}) => {
         currency: 'PKR', // Add the currency here
       });
 
-      console.log('DataResponse', dataResponse.data);
 
       // 2. Initialize the Payment Sheet
       const initResponse = await initPaymentSheet({
@@ -131,8 +129,7 @@ const IndiviualProperty = ({navigation}) => {
         },
       );
       if (response.status == 200) {
-        console.log('a');
-
+        
         // 3. Make the second API call after the first one succeeds
         try {
           const secondResponse = await axios.post(
@@ -140,8 +137,11 @@ const IndiviualProperty = ({navigation}) => {
             {
               PaymentIntentId: paymentIntent, // Replace with the data required by the second API
               TransactionAmount: route.params.data.advance,
+              TransactionType: 'Escrow',
               InAccordance: route.params.data.title,
+              InAccordancePropertyId: route.params.data._id,
               RecieverId: route.params.data.propertyowner,
+              SendedId :  decodeData.response._id
             },
             {
               headers: {
@@ -149,11 +149,9 @@ const IndiviualProperty = ({navigation}) => {
               },
             },
           );
-          console.log(secondResponse);
           // 4. Handle the second API response (optional)
           if (secondResponse.status === 201) {
-            console.log('Second API call was successful');
-            console.log('Payment successful!');
+            
             setShowAgreement(false);
             setShowDetailPage(true);
             Alert.alert(
@@ -180,10 +178,18 @@ const IndiviualProperty = ({navigation}) => {
     const handleLoadAndDecode = async () => {
       try {
         const decoded = await loadAndDecodeToken(); // Assuming loadAndDecodeToken does not require any parameters
+
         setDecodeData(decoded); // Assuming you want to log the decoded token
-        if (decoded.response._id == route.params.data.propertyowner) {
+        if (
+          decoded.response._id == route.params.data.propertyowner 
+        ) {
           setShowChat(false);
           setShowAgreement(false);
+          if(          route.params.data.propertySelling.agreement == true
+          ){
+            setShowDetailPage(true);
+
+          }
         } else {
           if (route.params.data.propertySelling.agreementMaker) {
             if (
@@ -429,9 +435,10 @@ const IndiviualProperty = ({navigation}) => {
           </View>
         </View>
       </View>
-      {showDetailPage ? (
+      {showDetailPage && route.params?.data ? (
         <DetailPropertySelling
           propertyId={route.params.data._id}
+          rented = {route.params.data.rented}
           rejectAgreementEffect={rejectAgreementEffect}
         />
       ) : (

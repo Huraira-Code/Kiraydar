@@ -6,7 +6,7 @@ const app = express();
 const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 const cors = require("cors");
-const { CreatePayment } = require("../controller/credit");
+const { CreatePayment, UpdateEscrow, getTransactionsById } = require("../controller/credit");
 
 app.use(
   cors({
@@ -16,5 +16,7 @@ app.use(
 );
 
 router.route("/createPayment").post(CreatePayment);
+router.route("/updateEscrow").post(UpdateEscrow);
+router.route("/getTransaction").post(getTransactionsById);
 
 module.exports = router;

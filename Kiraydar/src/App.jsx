@@ -34,6 +34,8 @@ import {
 import Channel from './screens/Channel';
 import loadAndDecodeToken from './Controller/LoadAndDecodeToken';
 import DetailPropertySelling from './screens/DetailPropertySelling';
+import ViewProfile from './screens/ViewProfile';
+import CreditScreen from './screens/CreditDetail';
 const client = StreamChat.getInstance('f4jd4sm2swcv');
 function App() {
  
@@ -45,7 +47,17 @@ function App() {
           <NavigationContainer>
             <StripeProvider publishableKey="pk_test_51Q90mr2LewuTEXoETZLxzjFCEMKSTkSPYtk2Fjjx4vvlwVbAVXbisDW0iUj1sIREf0gmIx25rIwAPzXpl1TeVj9B00AIEutf4J">
               <Stack.Navigator>
-             
+
+              <Stack.Screen
+                  name="Profile"
+                  component={Profile}
+                  options={{headerShown: false}}
+                />
+              <Stack.Screen
+                  name="CreditScreen"
+                  component={CreditScreen}
+                  options={{headerShown: false}}
+                />
               <Stack.Screen
                   name="Login"
                   component={Login}
@@ -56,6 +68,12 @@ function App() {
                   component={MainScreen}
                   options={{headerShown: false}}
                 />
+                 <Stack.Screen
+                  name="ViewProfile"
+                  component={ViewProfile}
+                  options={{headerShown: false}}
+                />
+              
               <Stack.Screen
                   name="Prelogin"
                   component={Prelogin}
@@ -103,11 +121,7 @@ function App() {
                   options={{headerShown: false}}
                 />
 
-                <Stack.Screen
-                  name="Profile"
-                  component={Profile}
-                  options={{headerShown: false}}
-                />
+                
               </Stack.Navigator>
             </StripeProvider>
           </NavigationContainer>

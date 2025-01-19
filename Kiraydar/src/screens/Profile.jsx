@@ -1,5 +1,5 @@
 import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import Logo from '../resource/logo.png';
 import Avatar from '../resource/avatar.png';
 import Wallet from '../resource/wallet.png';
@@ -8,10 +8,27 @@ import Gear from '../resource/gear.png';
 import {StreamChat} from 'stream-chat';
 import {ScrollView} from 'react-native-virtualized-view';
 import BottomBar from '../components/BottomBar';
+import loadAndDecodeToken from '../Controller/LoadAndDecodeToken';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 const Profile = ({navigation}) => {
-  const chatClient = StreamChat.getInstance('STREAM_API_KEY'); // Replace with your API key
+  const [decodeData, setDecodeData] = useState();
 
+  const chatClient = StreamChat.getInstance('STREAM_API_KEY'); // Replace with your API key
+  useEffect(() => {
+    const handleLoadAndDecode = async () => {
+      try {
+        const decoded = await loadAndDecodeToken(); // Assuming loadAndDecodeToken does not require any parameters
+        setDecodeData(decoded); // Assuming you want to log the decoded token
+      } catch (error) {
+        console.error('Error loading and decoding token:', error);
+      }
+    };
+    handleLoadAndDecode();
+  }, []);
+  if (decodeData) {
+    console.log('I LOVE MY KUMI', decodeData);
+  }
   const handleLogout = async () => {
     try {
       // Disconnect the user
@@ -36,9 +53,19 @@ const Profile = ({navigation}) => {
         </View>
         <View style={styles.imageContainer}>
           <Image source={Avatar} style={styles.avatarImage}></Image>
-          <Text style={styles.avatarText}>Huraira Shahid</Text>
+          <Text style={styles.avatarText}>
+            {decodeData ? decodeData.response.username : ''}
+          </Text>
         </View>
-        <TouchableOpacity style={styles.EditTextContainer}>
+        <TouchableOpacity
+          onPress={() => {
+            if (decodeData) {
+              navigation.navigate('ViewProfile', {decodeData: decodeData});
+            } else {
+              alert('No profile data available');
+            }
+          }}
+          style={styles.EditTextContainer}>
           <Text style={styles.EditText}>View and Edit Profile</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -47,7 +74,13 @@ const Profile = ({navigation}) => {
           <Text style={styles.EditText}>Logout From Profile</Text>
         </TouchableOpacity>
         <View>
-          <TouchableOpacity style={[styles.SearchContainer, {marginTop: 20}]}>
+          <TouchableOpacity  onPress={() => {
+            if (decodeData) {
+              navigation.navigate('CreditScreen', {decodeData: decodeData});
+            } else {
+              alert('No profile data available');
+            }
+          }} style={[styles.SearchContainer, {marginTop: 20}]}>
             <Image source={Wallet} style={styles.ColonImage}></Image>
             <View style={{textAlign: 'left', marginLeft: 8}}>
               <Text style={styles.SearchContainerHeading}>
