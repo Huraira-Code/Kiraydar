@@ -8,7 +8,21 @@ app.use(cookieParser());
 const cors = require("cors");
 const { query, check, validationResult } = require("express-validator");
 const User = require("../models/user");
+const multer = require("multer");
 
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "/tmp"); // Destination folder for uploaded files
+  },
+  filename: function (req, file, cb) {
+    cb(
+      null,
+      file.fieldname + "-" + Date.now() + "." + file.mimetype.split("/")[1]
+    );
+  },
+});
+
+const upload = multer({ storage: storage });
 app.use(
   cors({
     origin: "http://192.168.0.37:8083",
@@ -41,6 +55,7 @@ function authenticateToken(req, res, next) {
 router.route("/signin").post(signIn);
 router.post(
   "/signup",
+  upload.array("images"),
   [
     check("email")
       .isEmail()

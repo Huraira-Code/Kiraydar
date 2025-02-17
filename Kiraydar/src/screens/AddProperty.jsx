@@ -47,11 +47,9 @@ const MyComponent = React.memo(({childDataExtract}) => {
   const [selectedPlace, setSelectedPlace] = useState(null); // State to store selected place
 
   const triggerCallback = () => {
-    childDataExtract({query , markerPosition})
-    console.log("MERA KUMI" , coordinates )
-  }
-
-  
+    childDataExtract({query, markerPosition});
+    console.log('MERA KUMI', coordinates);
+  };
 
   const fetchCoordinates = async place => {
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
@@ -114,8 +112,11 @@ const MyComponent = React.memo(({childDataExtract}) => {
     }
   };
   const onMapPress = event => {
-    console.log("PAreesa 1" , event.geometry.coordinates[0])
-    setCoordinates([`Longitude: ${event.geometry.coordinates[0]}`, `Latitude: ${event.geometry.coordinates[1]}`]);
+    console.log('PAreesa 1', event.geometry.coordinates[0]);
+    setCoordinates([
+      `Longitude: ${event.geometry.coordinates[0]}`,
+      `Latitude: ${event.geometry.coordinates[1]}`,
+    ]);
     const {geometry} = event;
     setMarkerPosition(geometry.coordinates);
   };
@@ -123,13 +124,33 @@ const MyComponent = React.memo(({childDataExtract}) => {
   return (
     <View style={{flex: 1}}>
       {/* Search Input */}
+
       <TextInput
-        style={styles.input}
+        style={{
+          borderRadius: 5,
+          marginHorizontal: 5,
+          borderWidth:1,
+
+          marginTop: 5,
+          marginBottom: 5,
+          paddingLeft: 10,
+          borderColor: 'grey',
+          shadowColor: '#000',
+          backgroundColor: 'white',
+          shadowOffset: {
+            width: 0,
+            height: 2,
+          },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
+          elevation: 2,
+          marginBottom: 15,
+        }}
+        multiline={true}
         placeholder="Search for nearby places"
         value={query}
         onChangeText={handleInputChange}
       />
-
       {/* Results List - only show when no place is selected */}
       {!selectedPlace && (
         <FlatList
@@ -145,15 +166,15 @@ const MyComponent = React.memo(({childDataExtract}) => {
           )}
         />
       )}
-        <TouchableOpacity
-          onPress={() => {
-            setshowConfirmLocation(true);
-          }}
-          style={{backgroundColor: 'blue', width: '100%', padding: 10}}>
-          <Text style={{fontSize: 12, color: 'white', textAlign: 'center'}}>
-            Show Exact Location on Map
-          </Text>
-        </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => {
+          setshowConfirmLocation(true);
+        }}
+        style={{backgroundColor: 'blue', width: '100%', padding: 10}}>
+        <Text style={{fontSize: 12, color: 'white', textAlign: 'center'}}>
+          Show Exact Location on Map
+        </Text>
+      </TouchableOpacity>
       <Modal
         transparent={true}
         visible={showConfirmLocation}
@@ -194,7 +215,6 @@ const MyComponent = React.memo(({childDataExtract}) => {
 });
 
 const AddProperty = ({navigation}) => {
-
   const [decodeData, setDecodeData] = useState();
   const [loading, setLoading] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
@@ -204,11 +224,11 @@ const AddProperty = ({navigation}) => {
   const placeRef = useRef(null); // Replace useState for `place`
   const coordinateRef = useRef(null); // Replace useState for `coordinate`
 
-  const childDataExtract = (childData) =>{
+  const childDataExtract = childData => {
     console.log(childData);
     coordinateRef.current = childData.markerPosition;
-    placeRef.current = childData.query; 
-  }
+    placeRef.current = childData.query;
+  };
 
   useEffect(() => {
     const handleLoadAndDecode = async () => {
@@ -286,7 +306,7 @@ const AddProperty = ({navigation}) => {
   };
 
   const uploadToServer = async data => {
-    console.log("a")
+    console.log('a');
     setLoading(true);
     try {
       const formData = new FormData();
@@ -296,7 +316,7 @@ const AddProperty = ({navigation}) => {
       formData.append('rent', data.rent);
       formData.append('advance', data.advance);
       formData.append('bachelor', data.Bachelor);
-      formData.append('address', placeRef.current );
+      formData.append('address', placeRef.current);
       formData.append('coordinate', coordinateRef.current);
       formData.append('bedroom', data.bedroom);
       formData.append('bathroom', data.bathroom);
@@ -333,6 +353,9 @@ const AddProperty = ({navigation}) => {
       setLoading(false);
     }
   };
+  const defaultImages = Array(10).fill({
+    uri: 'https://www.olx.com.pk/assets/iconAddPhoto_noinline.8924e2486f689a28af51da37a7bda6ec.svg',
+  }); // Placeholder images
 
   return (
     <>
@@ -351,13 +374,14 @@ const AddProperty = ({navigation}) => {
         </TouchableOpacity>
         <Text
           style={{
-            fontSize: 25,
+            fontSize: 23,
             fontFamily: 'Abel-Regular',
-            fontWeight: '800',
+            fontWeight: '700',
             color: 'black',
             marginTop: 10,
+            marginHorizontal: 'auto',
           }}>
-          Add Properties
+          POST YOUR AD
         </Text>
         <Formik
           initialValues={{
@@ -378,8 +402,7 @@ const AddProperty = ({navigation}) => {
             console.log('Submitting Form:', values);
             uploadToServer(values);
           }}
-          
-          validate={values => { 
+          validate={values => {
             const errors = {};
             if (!values.title) {
               errors.title = 'Field is Required';
@@ -405,8 +428,8 @@ const AddProperty = ({navigation}) => {
             if (!values.peopleSharing) {
               errors.peopleSharing = 'Field is Required';
             }
-           
-            console.log(errors)
+
+            console.log(errors);
             return errors;
           }}>
           {({
@@ -422,11 +445,12 @@ const AddProperty = ({navigation}) => {
               <View style={{marginTop: 20}}>
                 <Text
                   style={{
-                    fontSize: 20,
+                    fontSize: 14,
                     fontFamily: 'Abel-Regular',
                     color: 'black',
+                    fontWeight: 700,
                   }}>
-                  Select Category
+                  Category
                 </Text>
                 <View style={styles.PropertyContainer}>
                   <TouchableOpacity
@@ -534,172 +558,279 @@ const AddProperty = ({navigation}) => {
                   </TouchableOpacity>
                 </View>
               </View>
-              <View style={{marginTop: 15}}>
-                <TextInput
-                  style={styles.InputText}
-                  onChangeText={handleChange('title')}
-                  onBlur={handleBlur('title')}
-                  value={values.title}
-                  placeholder="Write Property Title"
-                />
-                {errors.title && touched.title && (
-                  <Text style={styles.errorText}>{errors.title}</Text>
-                )}
-              </View>
-              <View style={{marginTop: 15}}>
-                <TextInput
-                  style={styles.InputText}
-                  rows={5}
-                  onChangeText={handleChange('description')}
-                  onBlur={handleBlur('description')}
-                  value={values.description}
-                  placeholder="Write Property Description"
-                />
-                {errors.description && touched.description && (
-                  <Text style={styles.errorText}>{errors.description}</Text>
-                )}
-              </View>
-              <View
-                style={{
-                  marginTop: 15,
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                }}>
-                <View style={{width: '47%'}}>
-                  <TextInput
-                    style={[styles.InputText, {width: '100%'}]}
-                    onChangeText={handleChange('advance')}
-                    onBlur={handleBlur('advance')}
-                    value={values.advance}
-                    placeholder="Advance"
-                    keyboardType="numeric"
-                  />
-                  {errors.advance && touched.advance && (
-                    <Text style={styles.errorText}>{errors.advance}</Text>
-                  )}
+              <View style={styles.addImageContainer}>
+                <View style={{marginRight: 10}}>
+                  <Text style={{fontWeight: 600, fontSize: 14, color: 'black'}}>
+                    Upload Images
+                  </Text>
                 </View>
-                <View style={{width: '47%'}}>
-                  <TextInput
-                    style={[styles.InputText, {width: '100%'}]}
-                    onChangeText={handleChange('rent')}
-                    onBlur={handleBlur('rent')}
-                    value={values.rent}
-                    placeholder="Rent Per Month"
-                    keyboardType="numeric"
-                  />
-                  {errors.rent && touched.rent && (
-                    <Text style={styles.errorText}>{errors.rent}</Text>
-                  )}
-                </View>
-              </View>
-              <View>
-                {/* Simple select component for display only */}
-                <View style={{marginTop: 12}}>
-                  <Text>Property Type</Text>
-                </View>
-
-                {/* Picker component for selecting mode */}
-                <View style={{marginTop: 2}}>
-                  <SelectPicker
-                    style={[styles.InputText, {color: 'grey', fontSize: 10}]}
-                    selectedValue={values.Bachelor}
-                    onValueChange={handleChange('Bachelor')}>
-                    <SelectPicker.Item label="Bachelor" value="true" />
-                    <SelectPicker.Item label="Non Bachelor" value="false" />
-                  </SelectPicker>
-                </View>
-              </View>
-              <View
-                style={{
-                  marginTop: 15,
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  marginHorizontal: 10,
-                  marginBottom: 10,
-                }}>
                 <View>
                   <View
                     style={{
                       flexDirection: 'row',
-                      alignItems: 'flex-end',
+                      flexWrap: 'wrap',
+                      alignItems: 'center',
                     }}>
-                    <AwesomeIcon
-                      style={{fontSize: 20, marginRight: 10}}
-                      name="bed"></AwesomeIcon>
-                    <TextInput
-                      style={[
-                        {
-                          borderBottomWidth: 1,
-                          padding: 0,
-                          paddingHorizontal: 5,
+                    <Pressable
+                      onPress={() =>
+                        uploadPhotoFromDevice(setFieldValue, values)
+                      }
+                      style={styles.addImageBox}>
+                      <AwesomeIcon
+                        style={styles.addImageIcon}
+                        name="cloud-upload"
+                      />
+                    </Pressable>
+
+                    {(values.images.length > 0 ? values.images : defaultImages)
+                      .slice(0, 2)
+                      .map((image, index) => (
+                        <View key={index} style={{paddingHorizontal: 5}}>
+                          <ImageBackground
+                            style={{
+                              width: 60,
+                              height: 60,
+                              borderWidth: 1,
+                              borderColor: '#868e96',
+                              borderRadius: 10,
+                            }}
+                            source={{uri: image.uri}}
+                          />
+                        </View>
+                      ))}
+                  </View>
+
+                  {/* Second Row */}
+                  <View style={{flexDirection: 'row', marginTop: 10}}>
+                    {(values.images.length > 0 ? values.images : defaultImages)
+                      .slice(2, 5)
+                      .map((image, index) => (
+                        <View key={index} style={{paddingHorizontal: 5}}>
+                          <ImageBackground
+                            style={{
+                              width: 60,
+                              height: 60,
+                              borderWidth: 1,
+                              borderColor: 'grey',
+                              borderRadius: 10,
+                            }}
+                            source={{uri: image.uri}}
+                          />
+                        </View>
+                      ))}
+                  </View>
+
+                  {/* Third Row */}
+                  <View style={{flexDirection: 'row', marginTop: 10}}>
+                    {(values.images.length > 0 ? values.images : defaultImages)
+                      .slice(5, 8)
+                      .map((image, index) => (
+                        <View key={index} style={{paddingHorizontal: 5}}>
+                          <ImageBackground
+                            style={{
+                              width: 60,
+                              height: 60,
+                              borderWidth: 1,
+                              borderColor: 'grey',
+                              borderRadius: 10,
+                            }}
+                            source={{uri: image.uri}}
+                          />
+                        </View>
+                      ))}
+                  </View>
+                  <Text style={{marginTop: 10, fontSize: 13, marginRight: 20}}>
+                    For the cover picture we recommend using the landscape mode
+                  </Text>
+                </View>
+              </View>
+              <View
+                style={{
+                  borderBottomWidth: 1,
+                  borderBottomColor: 'grey',
+                  paddingBottom: 20,
+                }}>
+                <View style={{marginTop: 20}}>
+                  <Text style={{fontSize: 14, fontWeight: 700, color: 'black'}}>
+                    Property Type*
+                  </Text>
+                  <View style={{flexDirection: 'row', paddingTop: 10}}>
+                    {/* Bachelor Button */}
+                    <TouchableOpacity
+                      onPress={() => setFieldValue('Bachelor', 'true')} // Updating Formik value
+                      style={{
+                        shadowOffset: {
+                          width: 0,
+                          height: 2,
                         },
-                      ]}
-                      onChangeText={handleChange('bedroom')}
-                      onBlur={handleBlur('bedroom')}
-                      value={values.bedroom}
-                      placeholder="No of bedroom"
-                      keyboardType="numeric"
-                    />
+                        borderWidth:1,
+
+                        shadowOpacity: 0.25,
+                        shadowRadius: 3.84,
+                        elevation: 2,
+                        paddingVertical: 10,
+                        paddingHorizontal: 20,
+                        margin: 2,
+                        borderRadius: 4,
+                        marginRight: 10,
+                        borderColor:
+                          values.Bachelor === 'true' ? 'blue' : 'grey',
+                        backgroundColor:
+                          values.Bachelor === 'true' ? '#D6E4FF' : 'white',
+                      }}>
+                      <Text
+                        style={{
+                          fontSize: 13,
+                          fontWeight: '600',
+                          color: values.Bachelor === 'true' ? 'blue' : 'black',
+                        }}>
+                        Bachelor
+                      </Text>
+                    </TouchableOpacity>
+
+                    {/* Non-Bachelor Button */}
+                    <TouchableOpacity
+                      onPress={() => setFieldValue('Bachelor', 'false')} // Updating Formik value
+                      style={{
+                        paddingVertical: 10,
+                        paddingHorizontal: 20,
+                        shadowOffset: {
+                          width: 0,
+                          height: 2,
+                        },
+                        borderWidth:1,
+
+                        shadowOpacity: 0.25,
+                        shadowRadius: 3.84,
+                        elevation: 2,
+                        paddingVertical: 10,
+                        paddingHorizontal: 20,
+                        margin: 2,
+                        borderRadius: 4,
+                        marginRight: 10,
+                        borderColor:
+                          values.Bachelor === 'false' ? 'blue' : 'grey',
+                        backgroundColor:
+                          values.Bachelor === 'false' ? '#D6E4FF' : 'white',
+                      }}>
+                      <Text
+                        style={{
+                          fontSize: 13,
+                          fontWeight: '600',
+                          color: values.Bachelor === 'false' ? 'blue' : 'black',
+                        }}>
+                        Non Bachelor
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                <View style={{marginTop: 20}}>
+                  <Text style={{fontSize: 14, fontWeight: 700, color: 'black'}}>
+                    Bedrooms*
+                  </Text>
+                  <View style={{marginTop: 2, width: '100%'}}>
+                    <SelectPicker
+                      style={[styles.InputText, {color: 'grey', fontSize: 10}]}
+                      selectedValue={values.bedroom || ''} // Ensure default value is handled
+                      onValueChange={value => setFieldValue('bedroom', value)}>
+                      <SelectPicker.Item
+                        style={{fontSize: 12}}
+                        label="Select Bedroom"
+                        value=""
+                      />
+                      <SelectPicker.Item
+                        style={{fontSize: 12}}
+                        label="1"
+                        value="1"
+                      />
+                      <SelectPicker.Item
+                        style={{fontSize: 12}}
+                        label="2"
+                        value="2"
+                      />
+                      <SelectPicker.Item
+                        style={{fontSize: 12}}
+                        label="3"
+                        value="3"
+                      />
+                      <SelectPicker.Item
+                        style={{fontSize: 12}}
+                        label="4"
+                        value="4"
+                      />
+                      <SelectPicker.Item
+                        style={{fontSize: 12}}
+                        label="5"
+                        value="5"
+                      />
+                      <SelectPicker.Item
+                        style={{fontSize: 12}}
+                        label="6"
+                        value="6"
+                      />
+                    </SelectPicker>
                   </View>
                   {errors.bedroom && touched.bedroom && (
                     <Text style={styles.errorText}>{errors.bedroom}</Text>
                   )}
                 </View>
-                <View>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'flex-end',
-                    }}>
-                    <AwesomeIcon
-                      style={{fontSize: 20, marginRight: 10}}
-                      name="shower"></AwesomeIcon>
-                    <TextInput
-                      style={[
-                        {
-                          borderBottomWidth: 1,
-                          padding: 0,
-                          paddingHorizontal: 5,
-                        },
-                      ]}
-                      onChangeText={handleChange('bathroom')}
-                      onBlur={handleBlur('bathroom')}
-                      value={values.bathroom}
-                      placeholder="No of bathrooms"
-                      keyboardType="numeric"
-                    />
+                <View style={{marginTop: 20}}>
+                  <Text style={{fontSize: 14, fontWeight: 700, color: 'black'}}>
+                    Bathrooms*
+                  </Text>
+                  <View style={{marginTop: 2, width: '100%'}}>
+                    <SelectPicker
+                      style={[styles.InputText, {color: 'grey', fontSize: 10}]}
+                      selectedValue={values.bathroom || ''} // Ensure default value is handled
+                      onValueChange={value => setFieldValue('bathroom', value)}>
+                      <SelectPicker.Item
+                        style={{fontSize: 12}}
+                        label="Select Bathroom"
+                        value=""
+                      />
+                      <SelectPicker.Item
+                        style={{fontSize: 12}}
+                        label="1"
+                        value="1"
+                      />
+                      <SelectPicker.Item
+                        style={{fontSize: 12}}
+                        label="2"
+                        value="2"
+                      />
+                      <SelectPicker.Item
+                        style={{fontSize: 12}}
+                        label="3"
+                        value="3"
+                      />
+                      <SelectPicker.Item
+                        style={{fontSize: 12}}
+                        label="4"
+                        value="4"
+                      />
+                      <SelectPicker.Item
+                        style={{fontSize: 12}}
+                        label="5"
+                        value="5"
+                      />
+                      <SelectPicker.Item
+                        style={{fontSize: 12}}
+                        label="6"
+                        value="6"
+                      />
+                    </SelectPicker>
                   </View>
-
                   {errors.bathroom && touched.bathroom && (
                     <Text style={styles.errorText}>{errors.bathroom}</Text>
                   )}
                 </View>
-              </View>
-              <View
-                style={{
-                  marginTop: 15,
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  marginBottom: 20,
-                  marginHorizontal: 10,
-                }}>
-                <View>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'flex-end',
-                    }}>
-                    <AwesomeIcon
-                      style={{fontSize: 20, marginRight: 10}}
-                      name="square"></AwesomeIcon>
+                <View style={{marginTop: 20}}>
+                  <Text style={{fontSize: 14, fontWeight: 700, color: 'black'}}>
+                    Area in Sq/feet*
+                  </Text>
+                  <View style={{marginTop: 2, width: '100%'}}>
                     <TextInput
-                      style={[
-                        {
-                          borderBottomWidth: 1,
-                          padding: 0,
-                          paddingHorizontal: 5,
-                        },
-                      ]}
+                      style={styles.InputText}
                       onChangeText={handleChange('area')}
                       onBlur={handleBlur('area')}
                       value={values.area}
@@ -711,23 +842,13 @@ const AddProperty = ({navigation}) => {
                     <Text style={styles.errorText}>{errors.area}</Text>
                   )}
                 </View>
-                <View>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'flex-end',
-                    }}>
-                    <AwesomeIcon
-                      style={{fontSize: 20, marginRight: 10}}
-                      name="group"></AwesomeIcon>
+                <View style={{marginTop: 20}}>
+                  <Text style={{fontSize: 14, fontWeight: 700, color: 'black'}}>
+                    No of People Sharing*
+                  </Text>
+                  <View style={{marginTop: 2, width: '100%'}}>
                     <TextInput
-                      style={[
-                        {
-                          borderBottomWidth: 1,
-                          padding: 0,
-                          paddingHorizontal: 5,
-                        },
-                      ]}
+                      style={styles.InputText}
                       onChangeText={handleChange('peopleSharing')}
                       onBlur={handleBlur('peopleSharing')}
                       value={values.peopleSharing}
@@ -740,32 +861,98 @@ const AddProperty = ({navigation}) => {
                   )}
                 </View>
               </View>
-              <View style={{marginTop: 10}}>
-                <MyComponent childDataExtract={childDataExtract} />
-              </View>
-              <View style={styles.addImageContainer}>
-                <Pressable
-                  onPress={() => uploadPhotoFromDevice(setFieldValue, values)}
-                  style={styles.addImageBox}>
-                  <AwesomeIcon
-                    style={styles.addImageIcon}
-                    name="cloud-upload"></AwesomeIcon>
-                  <Text style={styles.addImageText}>Upload Image</Text>
-                </Pressable>
-              </View>
-              <ScrollView horizontal style={{marginTop: 10}}>
-                <View style={{flexDirection: 'row'}}>
-                  {values.images.map((image, index) => (
-                    <View key={index} style={{padding: 5}}>
-                      <ImageBackground
-                        style={{width: 100, height: 100}}
-                        source={{uri: image.uri}}
-                      />
-                    </View>
-                  ))}
+              <View
+                style={{
+                  borderBottomWidth: 1,
+                  borderBottomColor: 'grey',
+                  paddingBottom: 20,
+                }}>
+                <View style={{marginTop: 15}}>
+                  <Text style={{fontSize: 14, fontWeight: 700, color: 'black'}}>
+                    Ad title*
+                  </Text>
+                  <TextInput
+                    style={styles.InputText}
+                    onChangeText={handleChange('title')}
+                    onBlur={handleBlur('title')}
+                    value={values.title}
+                  />
+                  <Text style={{fontSize: 13}}>
+                    Mention the key feature of your property your are renting.
+                  </Text>
+                  {errors.title && touched.title && (
+                    <Text style={styles.errorText}>{errors.title}</Text>
+                  )}
                 </View>
-              </ScrollView>
-
+                <View style={{marginTop: 20}}>
+                  <Text style={{fontSize: 14, fontWeight: 700, color: 'black'}}>
+                    Ad Description*
+                  </Text>
+                  <TextInput
+                    style={[styles.InputText, {textAlignVertical: 'top'}]} // Ensure text starts from the top
+                    multiline={true} // This makes the input span multiple lines
+                    rows={5}
+                    onChangeText={handleChange('description')}
+                    onBlur={handleBlur('description')}
+                    value={values.description}
+                    placeholder="Describe the property you're renting"
+                  />
+                  {errors.description && touched.description && (
+                    <Text style={styles.errorText}>{errors.description}</Text>
+                  )}
+                </View>
+                <View style={{marginTop: 20}}>
+                  <Text style={{fontSize: 14, fontWeight: 700, color: 'black'}}>
+                    Location*
+                  </Text>
+                  <MyComponent childDataExtract={childDataExtract} />
+                </View>
+              </View>
+              <View
+                style={{
+                  borderBottomWidth: 1,
+                  borderBottomColor: 'grey',
+                  paddingBottom: 20,
+                }}>
+                <View style={{marginTop: 15}}>
+                  <Text style={{fontSize: 14, fontWeight: 700, color: 'black'}}>
+                    Advance Price Paid*
+                  </Text>
+                  <TextInput
+                    style={styles.InputText}
+                    onChangeText={handleChange('advance')}
+                    onBlur={handleBlur('advance')}
+                    value={values.advance}
+                    placeholder="Advance"
+                    keyboardType="numeric"
+                  />
+                  <Text style={{fontSize: 13}}>
+                    Advance you need for the property.
+                  </Text>
+                  {errors.advance && touched.advance && (
+                    <Text style={styles.errorText}>{errors.advance}</Text>
+                  )}
+                </View>
+                <View style={{marginTop: 15 , marginBottom:15}}>
+                  <Text style={{fontSize: 14, fontWeight: 700, color: 'black'}}>
+                    Monthly Rent*
+                  </Text>
+                  <TextInput
+                    style={styles.InputText}
+                    onChangeText={handleChange('rent')}
+                    onBlur={handleBlur('rent')}
+                    value={values.rent}
+                    placeholder="Rent Per Month"
+                    keyboardType="numeric"
+                  />
+                  <Text style={{fontSize: 13}}>
+                    Monthly rent you need for the property.
+                  </Text>
+                  {errors.rent && touched.rent && (
+                    <Text style={styles.errorText}>{errors.rent}</Text>
+                  )}
+                </View>
+              </View>
               <View style={{marginVertical: 20}}>
                 <Button
                   style={{
@@ -775,7 +962,7 @@ const AddProperty = ({navigation}) => {
                   onPress={() => {
                     console.log('Button Pressed');
                     handleSubmit();
-                  }}                  
+                  }}
                   title="Add Property"
                 />
               </View>
@@ -816,20 +1003,22 @@ const styles = StyleSheet.create({
   },
   addImageContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 20,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    paddingHorizontal: 20,
+    marginTop: 1,
+    paddingHorizontal: 0,
     paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'grey',
   },
   addImageBox: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderRadius: 10,
+    backgroundColor: '#ebf1ff',
   },
   addImageIcon: {
     fontSize: 20,
-    marginRight: 10,
+    paddingHorizontal: 25,
+    paddingVertical: 20,
   },
   addImageText: {
     fontSize: 15,
@@ -879,6 +1068,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginHorizontal: 5,
     marginTop: 5,
+    borderWidth:1,
     marginBottom: 5,
     paddingLeft: 10,
     borderColor: 'grey',

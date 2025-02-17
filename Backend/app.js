@@ -26,6 +26,8 @@ const user_routes = require("./routes/user");
 const property_routes = require("./routes/property");
 const stripe_routes = require("./routes/stripe");
 const credit_routes = require("./routes/credit")
+const admin_routes = require("./routes/admin")
+
 // const officeVC_routes = require("./routes/officeVc");
 // const students_routes = require("./routes/students");
 // const controller_routers = require("./routes/controller.js");
@@ -50,6 +52,7 @@ app.use("/api/user", user_routes);
 app.use("/api/property", property_routes)
 app.use("/api/stripe", stripe_routes);
 app.use("/api/credit", credit_routes);
+app.use("/api/admin", admin_routes);
 
 
 const start = async () => {

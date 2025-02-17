@@ -11,7 +11,7 @@ const Prelogin = ({navigation}) => {
   return (
     <SafeAreaView style={styles.main}>
       <Image style={styles.logoImage} source={Logo}></Image>
-      <Text style={styles.mainFont}>KIRAYEDAR</Text>
+      <Text style={styles.mainFont}>kirayedar</Text>
       <View style={styles.bottomContainer}>
         <Pressable
           style={styles.bottomButtonContainer}
@@ -78,7 +78,7 @@ const Prelogin = ({navigation}) => {
             width: '90%',
             fontFamily: 'Abel-Regular',
           }}>
-          if you countinue, you are accepting{'\n'}KIRAYEDAR{' '}
+          if you countinue, you are accepting{'\n'}kirayedar{' '}
           <Text style={{textDecorationLine: 'underline'}}>
             Term and conditions and privacy policy
           </Text>

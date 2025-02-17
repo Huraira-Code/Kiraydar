@@ -27,7 +27,7 @@ import {PermissionsAndroid} from 'react-native';
 import Main from '../resource/HomeScreenMain.png';
 import BottomBar from '../components/BottomBar';
 import Loading from '../components/Loading';
-import { useFocusEffect } from '@react-navigation/native';
+import {useFocusEffect} from '@react-navigation/native';
 const MainScreen = ({navigation}) => {
   const [loading, setLoading] = useState(true);
   function switchScreen(location) {
@@ -40,9 +40,10 @@ const MainScreen = ({navigation}) => {
   const [decodeData, setDecodeData] = useState();
   const [myLongitude, setMyLongitude] = useState();
   const [myLatitude, setMyLatitude] = useState();
-  const [place,setPlaceName] = useState("")
+  const [place, setPlaceName] = useState('');
+  const [category, setCategory] = useState('Home');
   // const [decodedToken, setDecodedToken] = useState(null);
-
+  const [text, setText] = useState('');
   const requestLocationPermission = async () => {
     try {
       const granted = await PermissionsAndroid.request(
@@ -78,7 +79,7 @@ const MainScreen = ({navigation}) => {
         .then(location => {
           setMyLatitude(location.latitude);
           setMyLongitude(location.longitude);
-          getPlaceFromCoordinates(location.latitude,location.longitude)
+          getPlaceFromCoordinates(location.latitude, location.longitude);
           console.log('Location:', location);
         })
         .catch(error => {
@@ -142,9 +143,8 @@ const MainScreen = ({navigation}) => {
       connect();
     }
 
-    
     fetchRecommendation();
-  }, [decodeData]);
+  }, [decodeData, category]);
 
   // useFocusEffect(() => {
   //   // setLoading(true)
@@ -173,10 +173,10 @@ const MainScreen = ({navigation}) => {
   const getPlaceFromCoordinates = async (latitude, longitude) => {
     try {
       const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=pk.eyJ1IjoiaHVyYWlyYXNoYWhpZCIsImEiOiJjbTVrcmlqaWQxZjN5MmtzN2s0cDhkbjNvIn0.wJjeZBrpoJF7Un50Qrl2VQ`
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=pk.eyJ1IjoiaHVyYWlyYXNoYWhpZCIsImEiOiJjbTVrcmlqaWQxZjN5MmtzN2s0cDhkbjNvIn0.wJjeZBrpoJF7Un50Qrl2VQ`,
       );
       const data = await response.json();
-      if (data.features && data.features.length > 0) {        
+      if (data.features && data.features.length > 0) {
         setPlaceName(data.features[0].place_name); // Extract the place name
       } else {
         setPlaceName('No location found');
@@ -190,18 +190,22 @@ const MainScreen = ({navigation}) => {
   function isWithinDesiredDistance(fresh) {
     // Check if the fresh object has valid coordinates
     if (!fresh.coordinate || fresh.coordinate.length === 0) {
-        console.log("MY PRAEESA HURAIRA" , fresh.coordinate)
-        return false; // Skip items without valid coordinates
+      return false; // Skip items without valid coordinates
     }
 
     const location = fresh.coordinate[0].split(',').map(Number); // Convert coordinate string to numbers
-    const distance = getDistanceFromLatLonInKm(myLatitude, myLongitude, location[1], location[0]); // Calculate distance
+    const distance = getDistanceFromLatLonInKm(
+      myLatitude,
+      myLongitude,
+      location[1],
+      location[0],
+    ); // Calculate distance
 
     console.log(distance);
-    
+
     // Check if the distance is less than or equal to 20 km
-    return distance <= 20; 
-}
+    return distance <= 20;
+  }
   return (
     <>
       <ScrollView style={{backgroundColor: 'white'}}>
@@ -218,7 +222,13 @@ const MainScreen = ({navigation}) => {
           <Image
             style={{width: '15%', height: 50, marginTop: 5}}
             source={Logo}></Image>
-          <View style={{flexDirection: 'row', alignItems: 'center' , width:"50%" , paddingLeft: 6,}}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              width: '50%',
+              paddingLeft: 6,
+            }}>
             <Icon
               name="location-pin"
               style={{fontSize: 30, color: '#0a8ed9'}}></Icon>
@@ -260,8 +270,13 @@ const MainScreen = ({navigation}) => {
               color="#0a8ed9"
               style={{fontSize: 20}}
               placeholder="Search"></Feather>
-            <TextInput style={{fontSize: 15}} placeholder="Search"></TextInput>
+            <TextInput
+              onChangeText={setText}
+              value={text}
+              style={{fontSize: 15, width: '100%'}}
+              placeholder="Search"></TextInput>
           </View>
+
           <Icon name="bell" style={{fontSize: 35, color: '#0a8ed9'}}></Icon>
         </View>
         <View
@@ -282,7 +297,7 @@ const MainScreen = ({navigation}) => {
                   color: 'white',
                   fontSize: 20,
                 }}>
-                Kirayedar
+                kirayedar
               </Text>
             </View>
             <Text
@@ -312,56 +327,122 @@ const MainScreen = ({navigation}) => {
               marginHorizontal: 10,
               alignItems: 'center',
             }}>
-            <View style={{justifyContent: 'center', alignItems: 'center'}}>
-              <Icon name="home" style={{fontSize: 50, color: '#0a8ed9'}}></Icon>
+            <TouchableOpacity
+              onPress={() => {
+                setCategory('Home');
+              }}
+              style={{
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor:
+                  category === 'Home' ? '#0a8ed9' : 'transparent', // Highlight when selected
+                paddingHorizontal: category === 'Home' ? 15 : 0,
+                paddingVertical: 5,
+                borderRadius: 15,
+              }}>
+              <Icon
+                name="home"
+                style={{
+                  fontSize: 50,
+                  color: category === 'Home' ? 'white' : '#0a8ed9',
+                }}></Icon>
               <Text
                 style={{
                   fontSize: 12,
                   fontFamily: 'Abel-Regular',
                   fontWeight: '800',
+                  color: category === 'Home' ? 'white' : 'grey',
                 }}>
                 House
               </Text>
-            </View>
-            <View style={{justifyContent: '', alignItems: 'center'}}>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                setCategory('Flats');
+              }}
+              style={{
+                justifyContent: '',
+                alignItems: 'center',
+                backgroundColor:
+                  category === 'Flats' ? '#0a8ed9' : 'transparent', // Highlight when selected
+                paddingHorizontal: category === 'Flats' ? 15 : 0,
+                paddingVertical: 5,
+                borderRadius: 15,
+              }}>
               <CommunityIcon
                 name="office-building"
-                style={{fontSize: 50, color: '#0a8ed9'}}></CommunityIcon>
+                style={{
+                  fontSize: 50,
+                  color: category === 'Flats' ? 'white' : '#0a8ed9',
+                }}></CommunityIcon>
               <Text
                 style={{
                   fontSize: 12,
                   fontFamily: 'Abel-Regular',
                   fontWeight: '800',
+                  color: category === 'Flats' ? 'white' : 'grey',
                 }}>
                 Flats
               </Text>
-            </View>
-            <View style={{justifyContent: 'center', alignItems: 'center'}}>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                setCategory('Hostel');
+              }}
+              style={{
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor:
+                  category === 'Hostel' ? '#0a8ed9' : 'transparent', // Highlight when selected
+                paddingHorizontal: category === 'Hostel' ? 15 : 0,
+                paddingVertical: 5,
+                borderRadius: 15,
+              }}>
               <AwesomeIcon
                 name="home"
-                style={{fontSize: 50, color: '#0a8ed9'}}></AwesomeIcon>
+                style={{
+                  fontSize: 50,
+                  color: category === 'Hostel' ? 'white' : '#0a8ed9',
+                }}></AwesomeIcon>
               <Text
                 style={{
                   fontSize: 12,
                   fontFamily: 'Abel-Regular',
                   fontWeight: '800',
+                  color: category === 'Hostel' ? 'white' : 'grey',
                 }}>
                 Hostel
               </Text>
-            </View>
-            <View style={{justifyContent: 'center', alignItems: 'center'}}>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                setCategory('Property');
+              }}
+              style={{
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor:
+                  category === 'Property' ? '#0a8ed9' : 'transparent', // Highlight when selected
+                paddingHorizontal: category === 'Property' ? 15 : 0,
+                paddingVertical: 5,
+                borderRadius: 15,
+              }}>
               <CommunityIcon
                 name="home-city"
-                style={{fontSize: 50, color: '#0a8ed9'}}></CommunityIcon>
+                style={{
+                  fontSize: 50,
+                  color: category === 'Property' ? 'white' : '#0a8ed9',
+                }}></CommunityIcon>
               <Text
                 style={{
                   fontSize: 12,
                   fontFamily: 'Abel-Regular',
                   fontWeight: '800',
+                  color: category === 'Property' ? 'white' : 'grey',
                 }}>
                 Property
               </Text>
-            </View>
+            </TouchableOpacity>
           </View>
         </View>
         <View style={{paddingHorizontal: 10, marginTop: 10}}>
@@ -376,12 +457,21 @@ const MainScreen = ({navigation}) => {
           </Text>
           <ScrollView>
             {recommendation
-              .filter(fresh => isWithinDesiredDistance(fresh)) // Replace with your condition
+              .filter(
+                fresh =>
+                  isWithinDesiredDistance(fresh) &&
+                  fresh.type === category && // Filter by category
+                  (fresh.title.toLowerCase().includes(text.toLowerCase()) ||
+                    fresh.description
+                      .toLowerCase()
+                      .includes(text.toLowerCase())),
+              ) // Replace with your condition
               .map((fresh, index) => {
+                console.log(fresh.type);
                 const imageUrl = fresh.assest[0];
                 return (
                   <TouchableOpacity
-                    style={{width: '50%'}}
+                    // style={{width: '50%'}}
                     onPress={() => {
                       openProperty('IndiviualProperty', fresh);
                     }}
@@ -396,6 +486,20 @@ const MainScreen = ({navigation}) => {
                       source={{
                         uri: imageUrl,
                       }}></Image>
+                    <Text
+                      style={{
+                        marginLeft:"auto",
+                        position: 'relative',
+                        bottom: 200,
+                        backgroundColor: fresh.propertyowner.verified ? '#116d02' : '#750909',
+                        width:120, textAlign:"center",
+                        padding:5,
+                        fontSize:10,
+                        color:"white",
+borderRadius:5
+                      }}>
+                      {fresh.propertyowner.verified ? 'Verified Owner' : 'Unverified Owner'}
+                    </Text>
                     <Text
                       style={{fontWeight: '800', color: 'black', fontSize: 20}}>
                       Rs {fresh.rent}

@@ -1,4 +1,4 @@
-package com.kiraydar
+package com.kirayedar
 
 import android.app.Application
 import com.facebook.react.PackageList

@@ -19,7 +19,7 @@ TouchableOpacity;
 import {BASE_URL} from '../api';
 import BottomBar from '../components/BottomBar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
+import {useFocusEffect} from '@react-navigation/native';
 
 const MyAds = ({navigation}) => {
   console.log(process.env.API_URL);
@@ -114,7 +114,7 @@ const MyAds = ({navigation}) => {
       setLoading(false);
     }
   };
-  
+
   useEffect(() => {
     setLoading(true);
     if (typeOfData == 'ads') {
@@ -127,7 +127,6 @@ const MyAds = ({navigation}) => {
     }
   }, [decodeData, typeOfData]);
 
-
   //  useFocusEffect(() => {
   //   if (typeOfData == 'ads') {
   //     console.log('making milk');
@@ -137,37 +136,33 @@ const MyAds = ({navigation}) => {
   //   } else if (typeOfData == 'buyers') {
   //     fetchBuyer();
   //   }
-      
+
   //   });
-  
+
   return (
     <>
       <ScrollView style={{paddingHorizontal: 15, backgroundColor: 'white'}}>
-        <View>
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
           <Image style={styles.logoImage} source={Logo}></Image>
-          <Text
-            style={{
-              fontSize: 28,
-              fontFamily: 'Abel-Regular',
-              color: '#000',
-              letterSpacing: 1,
-            }}>
-            My Ads
-          </Text>
         </View>
         <View
           style={{
             flexDirection: 'row',
             justifyContent: 'space-between',
             textAlign: 'center',
-            borderBottomWidth: 1,
             borderBottomColor: '#808080',
             paddingBottom: 6,
             marginTop: 15,
             marginBottom: 15,
           }}>
           <TouchableOpacity
-            style={{width: '33.33%'}}
+            style={{
+              paddingHorizontal: 30,
+              paddingVertical: 5,
+              borderWidth: 1,
+              borderRadius: 20,
+              borderColor: '#0a8ed9',
+            }}
             onPress={() => setTypeOfData('ads')}>
             <Text
               style={[
@@ -178,12 +173,18 @@ const MyAds = ({navigation}) => {
                   borderBottomColor: '#0a8ed9',
                 }, // Add border if active
               ]}>
-              ADS
+              MY ADS
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={{width: '33.33%'}}
+            style={{
+              paddingHorizontal: 30,
+              paddingVertical: 5,
+              borderWidth: 1,
+              borderRadius: 20,
+              borderColor: '#0a8ed9',
+            }}
             onPress={() => setTypeOfData('favourite')}>
             <Text
               style={[
@@ -194,11 +195,17 @@ const MyAds = ({navigation}) => {
                   borderBottomColor: '#0a8ed9',
                 }, // Add border if active
               ]}>
-              FAVOURITES
+              RENTED 
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={{width: '33.33%'}}
+            style={{
+              paddingHorizontal: 30,
+              paddingVertical: 5,
+              borderWidth: 1,
+              borderRadius: 20,
+              borderColor: '#0a8ed9',
+            }}
             onPress={() => setTypeOfData('buyers')}>
             <Text
               style={[
@@ -293,7 +300,7 @@ const MyAds = ({navigation}) => {
                         style={{fontSize: 14, color: '#0a8ed9'}}
                         name="location-pin"
                       />
-                      <Text style={{fontSize: 14}}>{ad.address}</Text>
+                      <Text style={{fontSize: 14 , marginHorizontal:10}}>{ad.address}</Text>
                     </View>
                   </View>
                   <Text
@@ -338,8 +345,8 @@ export default MyAds;
 
 const styles = StyleSheet.create({
   logoImage: {
-    width: 70,
-    height: 70,
+    width: 40,
+    height: 40,
     marginTop: 10,
   },
   item2: {
@@ -363,6 +370,6 @@ const styles = StyleSheet.create({
   },
   textButton: {
     color: '#000',
-    fontSize: 15,
+    fontSize: 10,
   },
 });

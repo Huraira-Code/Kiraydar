@@ -38,8 +38,6 @@ import ViewProfile from './screens/ViewProfile';
 import CreditScreen from './screens/CreditDetail';
 const client = StreamChat.getInstance('f4jd4sm2swcv');
 function App() {
- 
-
   return (
     <GestureHandlerRootView style={{flex: 1}}>
       <OverlayProvider>
@@ -47,34 +45,50 @@ function App() {
           <NavigationContainer>
             <StripeProvider publishableKey="pk_test_51Q90mr2LewuTEXoETZLxzjFCEMKSTkSPYtk2Fjjx4vvlwVbAVXbisDW0iUj1sIREf0gmIx25rIwAPzXpl1TeVj9B00AIEutf4J">
               <Stack.Navigator>
-
-              <Stack.Screen
-                  name="Profile"
-                  component={Profile}
-                  options={{headerShown: false}}
-                />
-              <Stack.Screen
-                  name="CreditScreen"
-                  component={CreditScreen}
-                  options={{headerShown: false}}
-                />
-              <Stack.Screen
-                  name="Login"
-                  component={Login}
-                  options={{headerShown: false}}
-                />
-              <Stack.Screen
+                <Stack.Screen
                   name="MainScreen"
                   component={MainScreen}
                   options={{headerShown: false}}
                 />
-                 <Stack.Screen
+                <Stack.Screen
+                  name="SignUp"
+                  component={SignUp}
+                  options={{headerShown: false}}
+                />
+                <Stack.Screen
+                  name="MyAds"
+                  component={MyAds}
+                  options={{headerShown: false}}
+                />
+                <Stack.Screen
+                  name="Login"
+                  component={Login}
+                  options={{headerShown: false}}
+                />
+
+                <Stack.Screen
+                  name="AddProperty"
+                  component={AddProperty}
+                  options={{headerShown: false}}
+                />
+                <Stack.Screen
+                  name="Profile"
+                  component={Profile}
+                  options={{headerShown: false}}
+                />
+                <Stack.Screen
+                  name="CreditScreen"
+                  component={CreditScreen}
+                  options={{headerShown: false}}
+                />
+
+                <Stack.Screen
                   name="ViewProfile"
                   component={ViewProfile}
                   options={{headerShown: false}}
                 />
-              
-              <Stack.Screen
+
+                <Stack.Screen
                   name="Prelogin"
                   component={Prelogin}
                   options={{headerShown: false}}
@@ -84,44 +98,24 @@ function App() {
                   component={ChatScreen}
                   options={{headerShown: false}}
                 />
-                <Stack.Screen
-                  name="AddProperty"
-                  component={AddProperty}
-                  options={{headerShown: false}}
-                />
+
                 <Stack.Screen
                   name="Channel"
                   component={Channel}
                   options={{headerShown: false}}
                 />
-                <Stack.Screen
-                  name="MyAds"
-                  component={MyAds}
-                  options={{headerShown: false}}
-                />
-               
-               
-                <Stack.Screen
-                  name="SignUp"
-                  component={SignUp}
-                  options={{headerShown: false}}
-                />
+
                 <Stack.Screen
                   name="Location"
                   component={LocationScreen}
                   options={{headerShown: false}}
                 />
-                
-
-                
 
                 <Stack.Screen
                   name="IndiviualProperty"
                   component={IndiviualProperty}
                   options={{headerShown: false}}
                 />
-
-                
               </Stack.Navigator>
             </StripeProvider>
           </NavigationContainer>

@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const stripe = require("stripe")(
   "sk_test_51Q90mr2LewuTEXoE0He3jMvaViGCuev6fx1m08QZ8w6ShDO14m8WUI1ze8l6MEpmNPKS2fe67NTnFkIGbEQLYmdg00VwD6Dqlk"
 );
+const { uploadOnCloudinary } = require("../Utility/cloudinary");
 
 const signIn = async (req, res) => {
   try {
@@ -38,11 +39,26 @@ const signIn = async (req, res) => {
 };
 
 const signUp = async (req, res) => {
+  console.log("this is data", req.body.email);
+  console.log("this is file" , req.files)
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     console.log(errors.errors);
     return res.json({ errors: errors.errors });
   }
+
+  let imageUrlArray = [];
+
+  let uploadPromises = req.files.map((e) => {
+    return uploadOnCloudinary(e.path) // Explicitly return the promise here
+      .then((url) => {
+        imageUrlArray.push(url);
+      })
+      .catch((error) => {
+        console.error("Error uploading file:", error);
+      });
+  });
+
   const account = await stripe.accounts.create({
     type: "custom",
     country: "US",
@@ -77,41 +93,54 @@ const signUp = async (req, res) => {
   });
   console.log(account);
 
-  try {
-    const username = req.body.username;
-    const email = req.body.email;
-    const password = req.body.password;
-    const cnic = req.body.cnic;
-    const phonenumber = req.body.phonenumber;
-    const bankAccounted = req.body.bankAccount;
-    const myData = new User({
-      username: username,
-      email: email,
-      password: password,
-      cnic: cnic,
-      phonenumber: phonenumber,
-      bankAccount: bankAccounted,
-      BankAountStripeId:"acct_1QczOn2LXs6pQ0Rh",
-    });
+  Promise.all(uploadPromises)
+    .then(async () => {
+      try {
+        const username = req.body.username;
+        const email = req.body.email;
+        const password = req.body.password;
+        const cnic = req.body.cnic;
+        const phonenumber = req.body.phonenumber;
+        const bankAccounted = req.body.bankAccount;
+        const assest = imageUrlArray; // Use the updated array of image URLs
 
-    // Save the new issue to the database
-    const savedUser = await myData.save();
-    console.log(savedUser);
-    const accessToken = jwt.sign(
-      { response: savedUser },
-      process.env.ACCESS_TOKEN_SECRET
-    );
-    res.status(202).json({
-      success: true,
-      token: accessToken,
+        const myData = new User({
+          username: username,
+          email: email,
+          password: password,
+          cnic: cnic,
+          phonenumber: phonenumber,
+          bankAccount: bankAccounted,
+          BankAountStripeId: "acct_1QczOn2LXs6pQ0Rh",
+          CNICImageArray: assest,
+        });
+
+        // Save the new issue to the database
+        const savedUser = await myData.save();
+        console.log(savedUser);
+        const accessToken = jwt.sign(
+          { response: savedUser },
+          process.env.ACCESS_TOKEN_SECRET
+        );
+        res.status(202).json({
+          success: true,
+          token: accessToken,
+        });
+      } catch (error) {
+        console.error("Error creating User:", error);
+        res.status(500).json({
+          success: false,
+          error: "Internal Server Error",
+        });
+      }
+    })
+    .catch((error) => {
+      console.error("Error uploading files:", error);
+      res.status(500).json({
+        success: false,
+        error: "Error uploading files",
+      });
     });
-  } catch (error) {
-    console.error("Error creating User:", error);
-    res.status(500).json({
-      success: false,
-      error: "Internal Server Error",
-    });
-  }
 };
 module.exports = {
   signIn,

@@ -6,6 +6,7 @@ import {
   Text,
   Button,
   View,
+  ImageBackground,
   ScrollView,
   Modal,
 } from 'react-native';
@@ -16,15 +17,40 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {Formik} from 'formik';
 import axios from 'axios';
 import {BASE_URL} from '../api';
-
+import ImagePicker from 'react-native-image-crop-picker';
 import {API_KEY} from '@env';
+import AwesomeIcon from 'react-native-vector-icons/FontAwesome';
+import CommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Loading from '../components/Loading';
 const SignUp = ({navigation}) => {
+  const defaultImages = Array(10).fill({
+    uri: 'https://www.olx.com.pk/assets/iconAddPhoto_noinline.8924e2486f689a28af51da37a7bda6ec.svg',
+  }); // Placeholder images
+
   const [error, setError] = useState(false);
   const [errorValue, setErrorValue] = useState([]);
-    const [loading, setLoading] = useState(false);
-  
+  const [loading, setLoading] = useState(false);
+  const uploadPhotoFromDevice = async (setFieldValue, values) => {
+    try {
+      const images = await ImagePicker.openPicker({
+        width: 300,
+        height: 400,
+        cropping: true,
+        multiple: true,
+      });
+
+      const newImages = images.map(image => ({
+        uri: image.path,
+        name: image.path.split('/').pop(),
+        type: image.mime,
+      }));
+
+      setFieldValue('images', [...values.images, ...newImages]);
+    } catch (error) {
+      console.error('Image selection error:', error);
+    }
+  };
   console.log(error);
   console.log(errorValue);
   function switchScreen(location) {
@@ -38,28 +64,42 @@ const SignUp = ({navigation}) => {
   }
   console.log(process.env.API_URL);
   const CreateAccount = async data => {
-    setLoading(true)
+    setLoading(true);
     try {
+      const formData = new FormData();
+      formData.append('email', data.email);
+      formData.append('cnic', data.cnic);
+      formData.append('username', data.userName);
+      formData.append('phonenumber', data.phoneNumber);
+      formData.append('password', data.password);
+      formData.append('bankAccount', data.bankAccount);
+      data.images.forEach((image, index) => {
+        formData.append('images', {
+          uri: image.uri,
+          type: image.type,
+          name: image.name,
+        });
+      });
+      console.log("this is form data" , formData);
+      
       const dataResponse = await axios.post(
         `${BASE_URL}/api/user/signup`,
+        formData,
         {
-          email: data.email,
-          cnic: data.cnic,
-          username: data.userName,
-          phonenumber: data.phoneNumber,
-          password: data.password,
-          bankAccount : data.bankAccount
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         },
       );
 
       if (dataResponse.status === 202) {
-        console.log(dataResponse.data)
+        console.log(dataResponse.data);
         await setToken('token', dataResponse.data.token);
-        setLoading(false)
+        setLoading(false);
         switchScreen('MainScreen');
         // switchScreen('MainScreen');
       } else {
-        setLoading(false)
+        setLoading(false);
         console.log(dataResponse.data.errors);
         setError(true);
         setErrorValue(dataResponse.data.errors);
@@ -98,13 +138,14 @@ const SignUp = ({navigation}) => {
           cnic: '',
           userName: '',
           phoneNumber: '',
-          bankAccount:"",
+          bankAccount: '',
           password: '',
+          images: [],
         }}
         onSubmit={values => {
           CreateAccount(values);
         }}>
-        {({handleChange, handleBlur, handleSubmit, values}) => (
+        {({handleChange, handleBlur, handleSubmit, setFieldValue, values}) => (
           <View style={{width: '80%', marginHorizontal: 'auto'}}>
             <TextInput
               style={{
@@ -201,6 +242,39 @@ const SignUp = ({navigation}) => {
               placeholder="Password"
               secureTextEntry
             />
+            <View
+              style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                marginBottom: 30,
+                alignItems: 'center',
+              }}>
+              <Pressable
+                onPress={() => uploadPhotoFromDevice(setFieldValue, values)}
+                style={styles.addImageBox}>
+                <AwesomeIcon style={styles.addImageIcon} name="cloud-upload" />
+                <Text style={{fontSize: 10, paddingRight: 10}}>
+                  Upload CNIC Image
+                </Text>
+              </Pressable>
+
+              {(values.images.length > 0 ? values.images : defaultImages)
+                .slice(0, 2)
+                .map((image, index) => (
+                  <View key={index} style={{paddingHorizontal: 5}}>
+                    <ImageBackground
+                      style={{
+                        width: 60,
+                        height: 60,
+                        borderColor: '#868e96',
+                        borderRadius: 20,
+                      }}
+                      source={{uri: image.uri}}
+                    />
+                  </View>
+                ))}
+            </View>
+
             <Button
               style={{backgroundColor: '#0a8ed9'}}
               onPress={handleSubmit}
@@ -274,6 +348,31 @@ const styles = StyleSheet.create({
     fontFamily: 'Abel-Regular',
     fontSize: 15,
     textAlign: 'center',
+  },
+  addImageContainer: {
+    flexDirection: 'row',
+    marginTop: 1,
+    paddingHorizontal: 0,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'grey',
+  },
+  addImageBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 10,
+    backgroundColor: '#ebf1ff',
+    marginBottom: 10,
+  },
+  addImageIcon: {
+    fontSize: 20,
+    paddingLeft: 10,
+    marginRight: 10,
+    paddingVertical: 20,
+  },
+  addImageText: {
+    fontSize: 15,
+    fontFamily: 'Abel-Regular',
   },
   overlay: {
     flex: 1,

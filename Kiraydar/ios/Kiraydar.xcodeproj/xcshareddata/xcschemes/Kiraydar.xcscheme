@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "Kiraydar.app"
-               BlueprintName = "Kiraydar"
-               ReferencedContainer = "container:Kiraydar.xcodeproj">
+               BuildableName = "kirayedar.app"
+               BlueprintName = "kirayedar"
+               ReferencedContainer = "container:kirayedar.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "KiraydarTests.xctest"
-               BlueprintName = "KiraydarTests"
-               ReferencedContainer = "container:Kiraydar.xcodeproj">
+               BuildableName = "kirayedarTests.xctest"
+               BlueprintName = "kirayedarTests"
+               ReferencedContainer = "container:kirayedar.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "Kiraydar.app"
-            BlueprintName = "Kiraydar"
-            ReferencedContainer = "container:Kiraydar.xcodeproj">
+            BuildableName = "kirayedar.app"
+            BlueprintName = "kirayedar"
+            ReferencedContainer = "container:kirayedar.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "Kiraydar.app"
-            BlueprintName = "Kiraydar"
-            ReferencedContainer = "container:Kiraydar.xcodeproj">
+            BuildableName = "kirayedar.app"
+            BlueprintName = "kirayedar"
+            ReferencedContainer = "container:kirayedar.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

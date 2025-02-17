@@ -79,7 +79,7 @@ function DetailPropertySelling({propertyId, rejectAgreementEffect, rented}) {
                   InAccordance: detail.property.title,
                   InAccordancePropertyId: PropertyId,
                   RecieverId: detail.owner._id,
-                  SendedId : detail.agreementMakerID._id
+                  SendedId: detail.agreementMakerID._id,
                 },
                 {
                   headers: {
@@ -198,7 +198,7 @@ function DetailPropertySelling({propertyId, rejectAgreementEffect, rented}) {
               const thirdResponse = await axios.post(
                 `${BASE_URL}/api/credit/updateEscrow`, // Replace with the second API endpoint
                 {
-                  SendedId:detail.agreementMakerID._id,
+                  SendedId: detail.agreementMakerID._id,
                   RecieverId: detail.property.propertyowner,
                   InAccordancePropertyId: PropertyId,
                   TransactionTypeConvert: 'Refund',
@@ -353,65 +353,84 @@ function DetailPropertySelling({propertyId, rejectAgreementEffect, rented}) {
     return <ActivityIndicator size="large" color="blue" />;
   }
   return (
-    <View style={{backgroundColor: 'white', paddingHorizontal: 10}}>
+    <View style={{backgroundColor: 'white', marginHorizontal: 20}}>
       <View style={{marginTop: 10, marginBottom: 10}}>
         <Text
           style={{
-            fontSize: 15,
+            fontSize: 14,
             color: 'black',
             fontWeight: 500,
-            textAlign: 'center',
+            textAlign: 'left',
             marginBottom: 10,
           }}>
           Agreement Maker Details{' '}
         </Text>
-        <Text style={{color: 'black'}}>
-          Name : {detail.agreementMakerID.username}
-        </Text>
-        <Text style={{color: 'black'}}>
-          Email : {detail.agreementMakerID.email}
-        </Text>
-        <Text style={{color: 'black'}}>
-          Number : {detail.agreementMakerID.phonenumber}
-        </Text>
+        <View style={{flexDirection: 'row', marginVertical: 5}}>
+          <View style={{width: '40%'}}>
+            <Text>Name</Text>
+          </View>
+          <View style={{width: '60%'}}>
+            <Text style={{fontWeight: 800}}>
+              {detail.agreementMakerID.username}
+            </Text>
+          </View>
+        </View>
+        <View style={{flexDirection: 'row', marginVertical: 5}}>
+          <View style={{width: '40%'}}>
+            <Text>Email</Text>
+          </View>
+          <View style={{width: '60%'}}>
+            <Text style={{fontWeight: 800}}>
+              {detail.agreementMakerID.email}
+            </Text>
+          </View>
+        </View>
+        <View style={{flexDirection: 'row', marginVertical: 5}}>
+          <View style={{width: '40%'}}>
+            <Text>Number</Text>
+          </View>
+          <View style={{width: '60%'}}>
+            <Text style={{fontWeight: 800}}>
+              {detail.agreementMakerID.phonenumber}
+            </Text>
+          </View>
+        </View>
       </View>
       <View style={{marginTop: 10, marginBottom: 10}}>
         <Text
           style={{
-            fontSize: 15,
+            fontSize: 14,
             color: 'black',
             fontWeight: 500,
-            textAlign: 'center',
+            textAlign: 'left',
             marginBottom: 10,
           }}>
           Agreement Final Price Negotation{' '}
         </Text>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}>
-          <Text style={{color: 'black'}}>Advance Price in Escrow : </Text>
-          <Text style={{color: 'black'}}>
-            {detail.agreementDetails.agreementPricePaid} PKR
-          </Text>
+        <View style={{flexDirection: 'row', marginVertical: 5}}>
+          <View style={{width: '60%'}}>
+            <Text>Advance Price in Escrow :</Text>
+          </View>
+          <View style={{width: '40%'}}>
+            <Text style={{fontWeight: 800}}>
+              {detail.agreementDetails.agreementPricePaid} PKR
+            </Text>
+          </View>
         </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}>
-          <Text style={{color: 'black'}}>Monthly Price Offered : </Text>
-          <Text style={{color: 'black'}}>
-            {' '}
-            {detail.agreementDetails.negotationPrice !== null
-              ? detail.agreementDetails.negotationPrice
-              : `${detail.property.rent} `}
-            PKR
-          </Text>
+        <View style={{flexDirection: 'row', marginVertical: 5}}>
+          <View style={{width: '60%'}}>
+            <Text>Monthly Price Offered : </Text>
+          </View>
+          <View style={{width: '40%'}}>
+            <Text style={{fontWeight: 800}}>
+              {detail.agreementDetails.negotationPrice !== null
+                ? detail.agreementDetails.negotationPrice
+                : `${detail.property.rent} `}
+              {' '}PKR
+            </Text>
+          </View>
         </View>
+        
         {!detail.agreementDetails.agreementBuyer &&
           !detail.agreementDetails.agreementOwner && (
             <View

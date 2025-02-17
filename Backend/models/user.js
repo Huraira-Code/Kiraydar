@@ -36,7 +36,14 @@ const userSchema = mongoose.Schema({
     type: Array,
     default: [],
   },
-  
+  CNICImageArray: {
+    type: Array,
+    default: [],
+  },
+  Verified: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const User = mongoose.model("User", userSchema);

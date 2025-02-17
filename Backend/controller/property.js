@@ -8,7 +8,6 @@ const stripe = require("stripe")(
   "sk_test_51Q90mr2LewuTEXoE0He3jMvaViGCuev6fx1m08QZ8w6ShDO14m8WUI1ze8l6MEpmNPKS2fe67NTnFkIGbEQLYmdg00VwD6Dqlk"
 );
 
-
 const createProperty = async (req, res) => {
   console.log(req.body);
   console.log("this is first log in controller ", req.files);
@@ -58,7 +57,7 @@ const createProperty = async (req, res) => {
           city: city,
           area: area,
           address: address,
-          coordinate:coordinate,
+          coordinate: coordinate,
           assest: assest,
           bedroom: bedroom,
           bathroom: bathroom,
@@ -163,7 +162,9 @@ const freshRecommendation = async (req, res) => {
         ],
       }, // Use $ne for not equal
       "_id title description type rent advance bachelor state city area address assest bedroom bathroom areaofhouse propertyowner propertySelling peoplesharing coordinate rented"
-    ).exec();
+    )
+      .populate("propertyowner") // This will replace the ObjectId with the full User document
+      .exec();
 
     // Check if any data was found
     if (myData.length === 0) {
@@ -293,7 +294,10 @@ const agreementDetailShow = async (req, res) => {
     // Extract ownerId and agreementMakerId
     const propertyOwner = property.propertyowner;
     const propertyBuyerId = property.propertySelling.agreementMaker;
-    const AgreementDetail = property.propertySelling.agreementIds[property.propertySelling.agreementIds.length - 1];
+    const AgreementDetail =
+      property.propertySelling.agreementIds[
+        property.propertySelling.agreementIds.length - 1
+      ];
     console.log(propertyOwner);
     console.log(AgreementDetail.toString());
     console.log(propertyBuyerId.toString());
@@ -359,7 +363,7 @@ const AccceptAgreement = async (req, res) => {
   } catch (error) {
     console.error(error);
   }
-};  
+};
 
 const RejectAgreement = async (req, res) => {
   const authHeader = req.headers.authorization;
@@ -371,9 +375,9 @@ const RejectAgreement = async (req, res) => {
   const token = authHeader.split(" ")[1];
   const agreementId = req.body.Id;
   const propertId = req.body.propertyId;
-  const amount = req.body.amount ;
-  const recipientId = req.body.recipientId
-  console.log(req.body.recipientId)
+  const amount = req.body.amount;
+  const recipientId = req.body.recipientId;
+  console.log(req.body.recipientId);
   try {
     // Verify token
     const verify = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
@@ -393,13 +397,15 @@ const RejectAgreement = async (req, res) => {
     // Save updated agreement
     await agreement.save();
     await property.save();
-      // Create a Transfer to the connected account
-      const transfer = await stripe.transfers.create({
-        amount: amount, // amount in cents
-        currency: "usd",
-        destination: recipientId, // Connected Account ID (acct_...)
-      });
-    res.status(200).json({ message: "Agreement Rejected successfully" , transfer });
+    // Create a Transfer to the connected account
+    const transfer = await stripe.transfers.create({
+      amount: amount, // amount in cents
+      currency: "usd",
+      destination: recipientId, // Connected Account ID (acct_...)
+    });
+    res
+      .status(200)
+      .json({ message: "Agreement Rejected successfully", transfer });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
@@ -438,20 +444,17 @@ const MakeNegotationPrice = async (req, res) => {
   }
 };
 
-
 const pricePaid = async (req, res) => {
-  
-  
   try {
     const { amount, currency, recipientType, recipientId } = req.body;
 
     if (!amount || !currency || !recipientType || !recipientId) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      return res.status(400).json({ error: "Missing required fields" });
     }
 
     // Validate recipient type
-    if (recipientType !== 'card' && recipientType !== 'bank_account') {
-      return res.status(400).json({ error: 'Invalid recipient type' });
+    if (recipientType !== "card" && recipientType !== "bank_account") {
+      return res.status(400).json({ error: "Invalid recipient type" });
     }
 
     // Create a Transfer to the connected account
@@ -468,7 +471,6 @@ const pricePaid = async (req, res) => {
   }
 };
 
-
 const DealDone = async (req, res) => {
   const authHeader = req.headers.authorization;
 
@@ -479,9 +481,9 @@ const DealDone = async (req, res) => {
   const token = authHeader.split(" ")[1];
   const propertId = req.body.propertyId;
   const recipientId = req.body.recipientID;
-  const amount = req.body.amount
-  console.log(amount)
-   try {
+  const amount = req.body.amount;
+  console.log(amount);
+  try {
     // Verify token
     const verify = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
@@ -491,21 +493,20 @@ const DealDone = async (req, res) => {
 
     // Save updated agreement
     await property.save();
-      // Create a Transfer to the connected account
-      const transfer = await stripe.transfers.create({
-        amount: amount, // amount in cents
-        currency: "usd",
-        destination: recipientId, // Connected Account ID (acct_...)
-      });
-    res.status(200).json({ message: "Agreement Rejected successfully" , transfer });
+    // Create a Transfer to the connected account
+    const transfer = await stripe.transfers.create({
+      amount: amount, // amount in cents
+      currency: "usd",
+      destination: recipientId, // Connected Account ID (acct_...)
+    });
+    res
+      .status(200)
+      .json({ message: "Agreement Rejected successfully", transfer });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
-
-
 
 // const myProperty = async (req, res) => {
 //   try {
@@ -531,5 +532,5 @@ module.exports = {
   RejectAgreement,
   MakeNegotationPrice,
   pricePaid,
-  DealDone
+  DealDone,
 };

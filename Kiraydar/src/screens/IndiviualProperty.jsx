@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   Modal,
+  Dimensions,
 } from 'react-native';
 import React, {useState, useEffect} from 'react';
 import {useRoute} from '@react-navigation/native';
@@ -19,7 +20,6 @@ import {BASE_URL} from '../api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import loadAndDecodeToken from '../Controller/LoadAndDecodeToken';
 import Mapbox from '@rnmapbox/maps';
-
 Mapbox.setAccessToken(
   'pk.eyJ1IjoiaHVyYWlyYXNoYWhpZCIsImEiOiJjbTVrcmlqaWQxZjN5MmtzN2s0cDhkbjNvIn0.wJjeZBrpoJF7Un50Qrl2VQ',
 );
@@ -48,10 +48,11 @@ const IndiviualProperty = ({navigation}) => {
     setShowAgreement(true);
     setShowDetailPage(false);
   };
+  console.log(route.params.data.propertyowner.Verified);
 
   const sendToChat = async () => {
     if (decodeData) {
-      console.log("thi sis men" , decodeData.response._id);
+      console.log('thi sis men', decodeData.response._id);
       const channel = client.channel(
         'messaging',
         `${decodeData.response._id}-${route.params.data._id}`, // Unique channel ID
@@ -74,7 +75,6 @@ const IndiviualProperty = ({navigation}) => {
         amount: route.params.data.advance,
         currency: 'PKR', // Add the currency here
       });
-
 
       // 2. Initialize the Payment Sheet
       const initResponse = await initPaymentSheet({
@@ -129,7 +129,6 @@ const IndiviualProperty = ({navigation}) => {
         },
       );
       if (response.status == 200) {
-        
         // 3. Make the second API call after the first one succeeds
         try {
           const secondResponse = await axios.post(
@@ -141,7 +140,7 @@ const IndiviualProperty = ({navigation}) => {
               InAccordance: route.params.data.title,
               InAccordancePropertyId: route.params.data._id,
               RecieverId: route.params.data.propertyowner,
-              SendedId :  decodeData.response._id
+              SendedId: decodeData.response._id,
             },
             {
               headers: {
@@ -151,7 +150,6 @@ const IndiviualProperty = ({navigation}) => {
           );
           // 4. Handle the second API response (optional)
           if (secondResponse.status === 201) {
-            
             setShowAgreement(false);
             setShowDetailPage(true);
             Alert.alert(
@@ -180,15 +178,11 @@ const IndiviualProperty = ({navigation}) => {
         const decoded = await loadAndDecodeToken(); // Assuming loadAndDecodeToken does not require any parameters
 
         setDecodeData(decoded); // Assuming you want to log the decoded token
-        if (
-          decoded.response._id == route.params.data.propertyowner 
-        ) {
+        if (decoded.response._id == route.params.data.propertyowner) {
           setShowChat(false);
           setShowAgreement(false);
-          if(          route.params.data.propertySelling.agreement == true
-          ){
+          if (route.params.data.propertySelling.agreement == true) {
             setShowDetailPage(true);
-
           }
         } else {
           if (route.params.data.propertySelling.agreementMaker) {
@@ -211,19 +205,7 @@ const IndiviualProperty = ({navigation}) => {
 
   return (
     <ScrollView style={{backgroundColor: 'white'}}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 10,
-        }}>
-        <Image style={{width: 60, height: 50, marginTop: 5}} source={Logo} />
-      </View>
-
-      <ScrollView
-        horizontal={true}
-        style={{height: 300, marginHorizontal: 20, marginTop: 20}}>
+      <ScrollView horizontal={true} style={{height: 300}}>
         {route.params.data.assest.map((ad, index) => (
           <Image
             key={index} // Add key for list items
@@ -252,193 +234,315 @@ const IndiviualProperty = ({navigation}) => {
       <View>
         <Text
           style={{
-            textAlign: 'center',
-            fontSize: 18,
+            textAlign: 'left',
+            fontSize: 28,
             color: 'black',
+            marginLeft: 20,
             marginTop: 10,
+            fontWeight: 700,
+          }}>
+          Rs {route.params.data.rent}
+        </Text>
+        <Text
+          style={{
+            textAlign: 'left',
+            fontSize: 16,
+            color: 'black',
+            marginLeft: 20,
+            marginTop: 3,
+            fontWeight: 600,
           }}>
           {route.params.data.title}
         </Text>
-        <Text style={{textAlign: 'center'}}>
-          {route.params.data.description}
+        <Text
+          style={{
+            marginLeft: 20,
+            marginTop: 8,
+            backgroundColor: '#eceff4',
+            width: '18%',
+            paddingLeft:10,
+            paddingVertical: 5,
+            color: 'black',
+            fontSize: 12,
+            fontWeight: 600,
+          }}>
+          For rent
+        </Text>
+        <Text
+          style={{
+            marginLeft: 20,
+            marginTop: 8,
+            backgroundColor: route.params.data.propertyowner.Verified ? '#116d02' : '#750909',
+            width: '32%',
+            paddingLeft:10,
+            paddingVertical: 5,
+
+            color: 'white',
+            fontSize: 12,
+            fontWeight: 600,
+          }}>
+          {route.params.data.propertyowner.Verified
+            ? 'Verified Owner'
+            : 'Unverified Owner'}
         </Text>
       </View>
-      <View
-        style={{
-          marginTop: 15,
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginHorizontal: 20,
-          marginBottom: 10,
-        }}>
-        <View>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'flex-end',
-            }}>
-            <AwesomeIcon
-              style={{fontSize: 20, marginRight: 10, color: 'blue'}}
-              name="bed">
-              <Text style={{fontSize: 14, color: 'black'}}>No of bedroom</Text>
-            </AwesomeIcon>
-            <Text>{route.params.data.bedroom}</Text>
-          </View>
-        </View>
-        <View>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'flex-end',
-            }}>
-            <AwesomeIcon
-              style={{fontSize: 20, marginRight: 10, color: 'blue'}}
-              name="shower">
-              <Text style={{fontSize: 14, color: 'black'}}>No of Shower</Text>
-            </AwesomeIcon>
-            <Text>{route.params.data.bathroom}</Text>
-          </View>
-        </View>
-      </View>
-      <View
-        style={{
-          marginTop: 15,
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginBottom: 20,
-          marginHorizontal: 20,
-        }}>
-        <View>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'flex-end',
-            }}>
-            <AwesomeIcon
-              style={{fontSize: 20, marginRight: 10, color: 'blue'}}
-              name="square">
-              <Text style={{fontSize: 14, color: 'black'}}>
-                Area in sq/feet
-              </Text>
-            </AwesomeIcon>
-            <Text>{route.params.data.areaofhouse}</Text>
-          </View>
-        </View>
-        <View>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'flex-end',
-            }}>
-            <AwesomeIcon
-              style={{fontSize: 20, marginRight: 10, color: 'blue'}}
-              name="group">
-              {' '}
-              <Text style={{fontSize: 14, color: 'black'}}>
-                No of People Sharing
-              </Text>
-            </AwesomeIcon>
-            <Text>{route.params.data.peoplesharing}</Text>
-          </View>
-        </View>
-      </View>
-      <Text
-        style={{
-          backgroundColor: 'blue',
-          marginHorizontal: 20,
-          paddingVertical: 10,
-          color: 'white',
-          fontSize: 15,
-          textAlign: 'center',
-          borderRadius: 10,
-        }}>
-        One Time Advance : {route.params.data.advance} Rs
-      </Text>
-      <Text
-        style={{
-          backgroundColor: 'blue',
-          marginHorizontal: 20,
-          paddingVertical: 10,
-          marginTop: 10,
-          color: 'white',
-          fontSize: 15,
-          textAlign: 'center',
-          borderRadius: 10,
-        }}>
-        Monthly Rent : {route.params.data.rent} Rs
-      </Text>
-      <View
+      <TouchableOpacity
+        onPress={() => {
+          setShowLocation(true);
+        }}
         style={{
           flexDirection: 'row',
-          alignItems: 'center',
           marginHorizontal: 20,
           marginTop: 20,
+          paddingBottom: 20,
+          borderBottomWidth: 1,
+          borderBottomColor: '#adb5bd',
         }}>
         <AwesomeIcon
           style={{fontSize: 30, marginRight: 10, color: 'blue'}}
           name="map-marker"></AwesomeIcon>
-        <Text style={{color: 'black'}}>{route.params.data.address}</Text>
-      </View>
-      <View>
-        <TouchableOpacity
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: 'blue',
-            paddingHorizontal: 20,
-            paddingVertical: 10,
-            marginHorizontal: 20,
-            marginTop: 10,
-          }}
-          onPress={() => {
-            setShowLocation(true);
-          }}>
-          <Text style={{color: 'white', textAlign: 'center'}}>
-            Show Exact Location
-          </Text>
-        </TouchableOpacity>
+        <Text>{route.params.data.address}</Text>
+      </TouchableOpacity>
+      <View
+        style={{
+          marginTop: 15,
+          flexDirection: 'row',
+          marginHorizontal: 20,
+          marginBottom: 10,
+        }}>
+        <View style={{marginRight: '30%'}}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'left',
+            }}>
+            <View>
+              <AwesomeIcon
+                style={{
+                  fontSize: 20,
+                  marginRight: 10,
+                  color: 'blue',
+                  width: 30,
+                }}
+                name="bed"></AwesomeIcon>
+            </View>
+            <View>
+              <Text style={{fontSize: 14, color: 'grey'}}>Bedrooms</Text>
+              <Text style={{fontSize: 14, color: 'black', fontWeight: 600}}>
+                {route.params.data.bedroom}
+              </Text>
+            </View>
+          </View>
+        </View>
+        <View>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'left',
+            }}>
+            <View>
+              <AwesomeIcon
+                style={{
+                  fontSize: 20,
+                  marginRight: 10,
+                  color: 'blue',
+                  width: 30,
+                }}
+                name="shower"></AwesomeIcon>
+            </View>
+            <View>
+              <Text style={{fontSize: 14, color: 'grey'}}>Bathrooms</Text>
+
+              <Text style={{fontSize: 14, color: 'black', fontWeight: 600}}>
+                {route.params.data.bathroom}
+              </Text>
+            </View>
+          </View>
+        </View>
       </View>
       <View
         style={{
           marginTop: 15,
           flexDirection: 'row',
-          justifyContent: 'space-between',
           marginBottom: 20,
           marginHorizontal: 20,
+          borderBottomWidth: 1,
+          paddingBottom: 20,
+          borderBottomColor: '#adb5bd',
         }}>
+        <View style={{marginRight: '40%'}}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'left',
+            }}>
+            <View>
+              <AwesomeIcon
+                style={{
+                  fontSize: 20,
+                  marginRight: 10,
+                  color: 'blue',
+                  width: 30,
+                }}
+                name="square"></AwesomeIcon>
+            </View>
+            <View>
+              <Text style={{fontSize: 14, color: 'grey'}}>Area</Text>
+              <Text style={{fontSize: 14, color: 'black', fontWeight: 600}}>
+                {route.params.data.areaofhouse}
+              </Text>
+            </View>
+          </View>
+        </View>
         <View>
           <View
             style={{
               flexDirection: 'row',
-              alignItems: 'flex-end',
-              backgroundColor: 'blue',
-              paddingHorizontal: 20,
-              paddingVertical: 10,
+              alignItems: 'left',
             }}>
-            <Text style={{color: 'white'}}>
+            <View>
+              <AwesomeIcon
+                style={{
+                  fontSize: 20,
+                  marginRight: 10,
+                  color: 'blue',
+                  width: 30,
+                }}
+                name="group">
+                {' '}
+              </AwesomeIcon>
+            </View>
+            <View>
+              <Text style={{fontSize: 14, color: 'grey'}}>Sharing</Text>
+              <Text style={{fontSize: 14, color: 'black', fontWeight: 600}}>
+                {route.params.data.peoplesharing}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+      <View style={{marginHorizontal: 20}}>
+        <Text
+          style={{
+            fontSize: 14,
+            fontWeight: 600,
+            color: 'black',
+            marginBottom: 10,
+          }}>
+          Details
+        </Text>
+        <View style={{flexDirection: 'row', marginVertical: 5}}>
+          <View style={{width: '60%'}}>
+            <Text>Area Unit</Text>
+          </View>
+          <View style={{width: '50%'}}>
+            <Text style={{fontWeight: 800}}>Square feet</Text>
+          </View>
+        </View>
+        <View style={{flexDirection: 'row', marginVertical: 5}}>
+          <View style={{width: '60%'}}>
+            <Text>Area </Text>
+          </View>
+          <View style={{width: '50%'}}>
+            <Text style={{fontWeight: 800}}>
+              {route.params.data.areaofhouse}
+            </Text>
+          </View>
+        </View>
+        <View style={{flexDirection: 'row', marginVertical: 5}}>
+          <View style={{width: '60%'}}>
+            <Text>No of people Sharing</Text>
+          </View>
+          <View style={{width: '50%'}}>
+            <Text style={{fontWeight: 800}}>
+              {route.params.data.peoplesharing}
+            </Text>
+          </View>
+        </View>
+        <View style={{flexDirection: 'row', marginVertical: 5}}>
+          <View style={{width: '60%'}}>
+            <Text>Bedrooms</Text>
+          </View>
+          <View style={{width: '50%'}}>
+            <Text style={{fontWeight: 800}}>{route.params.data.bedroom}</Text>
+          </View>
+        </View>
+        <View style={{flexDirection: 'row', marginVertical: 5}}>
+          <View style={{width: '60%'}}>
+            <Text>Bathrooms</Text>
+          </View>
+          <View style={{width: '50%'}}>
+            <Text style={{fontWeight: 800}}>{route.params.data.bathroom}</Text>
+          </View>
+        </View>
+        <View style={{flexDirection: 'row', marginVertical: 5}}>
+          <View style={{width: '60%'}}>
+            <Text>Monthly Rent</Text>
+          </View>
+          <View style={{width: '50%'}}>
+            <Text style={{fontWeight: 800}}>Rs {route.params.data.rent}</Text>
+          </View>
+        </View>
+        <View style={{flexDirection: 'row', marginVertical: 5}}>
+          <View style={{width: '60%'}}>
+            <Text>1 time Advance</Text>
+          </View>
+          <View style={{width: '50%'}}>
+            <Text style={{fontWeight: 800}}>
+              Rs {route.params.data.advance}
+            </Text>
+          </View>
+        </View>
+        <View style={{flexDirection: 'row', marginVertical: 5}}>
+          <View style={{width: '60%'}}>
+            <Text>Property Type</Text>
+          </View>
+          <View style={{width: '50%'}}>
+            <Text style={{fontWeight: 800}}>{route.params.data.type}</Text>
+          </View>
+        </View>
+        <View style={{flexDirection: 'row', marginVertical: 5}}>
+          <View style={{width: '60%'}}>
+            <Text>Resident Type</Text>
+          </View>
+          <View style={{width: '50%'}}>
+            <Text style={{fontWeight: 800}}>
               {route.params.data.bachelor ? 'Non Bachelor' : 'Bachelor'}
             </Text>
           </View>
         </View>
-        <View>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'flex-end',
-              backgroundColor: 'blue',
-              paddingHorizontal: 20,
-              paddingVertical: 10,
-            }}>
-            <Text style={{color: 'white'}}>
-              Property Type {route.params.data.type}
-            </Text>
-          </View>
-        </View>
+      </View>
+      <View style={{marginHorizontal: 20, marginVertical: 20}}>
+        <Text
+          style={{
+            fontSize: 14,
+            fontWeight: 600,
+            color: 'black',
+            marginBottom: 10,
+          }}>
+          Description
+        </Text>
+        <Text style={{lineHeight: 19}}>
+          {`The property features a ${route.params.data.type} with an area of ${
+            route.params.data.areaofhouse
+          } Square feet, accommodating ${
+            route.params.data.peoplesharing
+          } residents who share ${route.params.data.bedroom} bedrooms and ${
+            route.params.data.bathroom
+          } bathroom. The monthly rent is Rs ${
+            route.params.data.rent
+          }, with a one-time advance payment of Rs ${
+            route.params.data.rent
+          }. This space is for ${
+            route.params.data.bachelor ? 'Non Bachelor' : 'Bachelor'
+          }, offering a comfortable and well-managed living experience.`}
+        </Text>
+        <Text style={{marginTop: 10}}>{route.params.data.description}</Text>
       </View>
       {showDetailPage && route.params?.data ? (
         <DetailPropertySelling
           propertyId={route.params.data._id}
-          rented = {route.params.data.rented}
+          rented={route.params.data.rented}
           rejectAgreementEffect={rejectAgreementEffect}
         />
       ) : (
@@ -461,7 +565,6 @@ const IndiviualProperty = ({navigation}) => {
       ) : (
         <></>
       )}
-
       {showChat ? (
         <TouchableOpacity
           onPress={sendToChat}
@@ -479,13 +582,11 @@ const IndiviualProperty = ({navigation}) => {
       ) : (
         <></>
       )}
-
       <Modal transparent={true} visible={loading} animationType="fade">
         <View style={styles.overlay}>
           <Loading />
         </View>
       </Modal>
-
       <Modal
         transparent={true}
         visible={showLocation}
