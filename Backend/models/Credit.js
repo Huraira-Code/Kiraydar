@@ -7,7 +7,7 @@ const creditSchema = mongoose.Schema({
   },
   TransactionType: {
     type: String,
-    enum: ["Escrow", "Transfered" , "Refund" , "Forward"],
+    enum: ["Escrow", "Transfered", "Refund", "Forward"],
     required: true,
   },
   TransactionAmount: {
@@ -19,13 +19,16 @@ const creditSchema = mongoose.Schema({
     default: true,
   },
   InAccordancePropertyId: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref : "Property"
   },
   SendedId: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
   },
   RecieverId: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
   },
 });
 

@@ -46,15 +46,16 @@ function App() {
             <StripeProvider publishableKey="pk_test_51Q90mr2LewuTEXoETZLxzjFCEMKSTkSPYtk2Fjjx4vvlwVbAVXbisDW0iUj1sIREf0gmIx25rIwAPzXpl1TeVj9B00AIEutf4J">
               <Stack.Navigator>
                 <Stack.Screen
-                  name="MainScreen"
-                  component={MainScreen}
-                  options={{headerShown: false}}
-                />
-                <Stack.Screen
                   name="SignUp"
                   component={SignUp}
                   options={{headerShown: false}}
                 />
+                <Stack.Screen
+                  name="MainScreen"
+                  component={MainScreen}
+                  options={{headerShown: false}}
+                />
+
                 <Stack.Screen
                   name="MyAds"
                   component={MyAds}

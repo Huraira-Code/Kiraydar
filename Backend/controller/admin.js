@@ -17,7 +17,6 @@ const allUser = async (req, res) => {
 };
 
 const verifyUser = async (req, res) => {
-  
   try {
     // Assume the user id is sent as a URL parameter, e.g., /verify/:id
     const { id } = req.body;
@@ -44,25 +43,39 @@ const verifyUser = async (req, res) => {
   }
 };
 
-
 const allAnalytics = async (req, res) => {
-  
   try {
     const totalUsers = await User.countDocuments();
     const totalProperty = await Property.countDocuments();
     const totalCredit = await Credit.countDocuments();
     const totalAgreement = await Agreement.countDocuments();
 
-    res.status(200).json({totalUsers , totalProperty ,totalCredit , totalAgreement});
+    res
+      .status(200)
+      .json({ totalUsers, totalProperty, totalCredit, totalAgreement });
   } catch (error) {
     console.error("Error verifying user:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
+const creditData = async (req, res) => {
+  try {
+    // Assuming you have a Mongoose model named 'Credit'
+    const data = await Credit.find({})
+      .populate("SendedId") // Populates sender field with user details
+      .populate("RecieverId") // Populates receiver field with user details
+      .populate("InAccordancePropertyId");
+    res.status(200).json({ data });
+  } catch (error) {
+    console.error("Error retrieving credit data:", error);
+    res.status(500).json({ message: "Error retrieving credit data", error });
+  }
+};
 
 module.exports = {
   allUser,
   verifyUser,
-  allAnalytics
+  allAnalytics,
+  creditData,
 };

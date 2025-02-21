@@ -13,8 +13,9 @@ app.use(
     credentials: true,
   })
 );
-const { payment } = require("../controller/stripe");
+const { payment, getPaymentInfo } = require("../controller/stripe");
 
 router.route("/intents").post(payment);
+router.route("/getpaymentInfo").post(getPaymentInfo);
 
 module.exports = router;
